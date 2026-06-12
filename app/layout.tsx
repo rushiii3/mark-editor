@@ -4,27 +4,28 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Outfit, Merriweather, Fira_Code } from "next/font/google";
+import "katex/dist/katex.min.css";
 const fontSans = Outfit({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-sans"
 });
 
 const fontSerif = Merriweather({
   subsets: ["latin"],
-  variable: "--font-serif",
+  variable: "--font-serif"
 });
 
 const fontMono = Fira_Code({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-mono"
 });
 export const metadata: Metadata = {
   title: "Mark Editor",
-  description: "Offline-first Markdown to PDF editor",
+  description: "Offline-first Markdown to PDF editor"
 };
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
@@ -34,7 +35,9 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", "font-sans")}
       suppressHydrationWarning
     >
-      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased min-h-full`}>
+      <body
+        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased min-h-full`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

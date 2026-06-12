@@ -167,6 +167,7 @@
 }
 
 @layer base {
+
   html,
   body {
     min-height: 100%;
@@ -175,6 +176,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground shrink-0;
   }
@@ -191,14 +193,12 @@
     position: absolute;
     inset: -1px;
     z-index: -1;
-    background: conic-gradient(
-      from var(--beam-angle, 0deg),
-      transparent 0deg,
-      transparent 90deg,
-      var(--primary) 180deg,
-      transparent 270deg,
-      transparent 360deg
-    );
+    background: conic-gradient(from var(--beam-angle, 0deg),
+        transparent 0deg,
+        transparent 90deg,
+        var(--primary) 180deg,
+        transparent 270deg,
+        transparent 360deg);
     border-radius: inherit;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
@@ -215,6 +215,7 @@
     from {
       --beam-angle: 0deg;
     }
+
     to {
       --beam-angle: 360deg;
     }
@@ -230,9 +231,9 @@
     transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
-  .premium-card:hover {
-    @apply border-primary/30 ring-1 ring-primary/10 shadow-[0_0_20px_rgba(var(--primary),0.05)];
-  }
+  /* .premium-card:hover {
+    @apply border-primary/30 ring-1 ring-primary/10 shadow-[0_0_20px_rgba(var(--primary), 0.05)];
+  } */
 
   .pdf-preview-canvas {
     --pdf-page-width: 210mm;
@@ -247,23 +248,16 @@
     position: relative;
     width: min(var(--pdf-page-width), 100%);
     margin: 0 auto;
-    min-height: calc(
-      (var(--pdf-page-height) * var(--pdf-page-count, 1)) +
-        (var(--pdf-page-gap) * (var(--pdf-page-count, 1) - 1))
-    );
+    min-height: calc((var(--pdf-page-height) * var(--pdf-page-count, 1)) + (var(--pdf-page-gap) * (var(--pdf-page-count, 1) - 1)));
     border-radius: 12px;
     background:
-      repeating-linear-gradient(
-        to bottom,
+      repeating-linear-gradient(to bottom,
         white 0,
         white calc(var(--pdf-page-height) - 1px),
-        color-mix(in oklab, var(--border) 78%, black 22%)
-          calc(var(--pdf-page-height) - 1px),
-        color-mix(in oklab, var(--border) 78%, black 22%)
-          var(--pdf-page-height),
+        color-mix(in oklab, var(--border) 78%, black 22%) calc(var(--pdf-page-height) - 1px),
+        color-mix(in oklab, var(--border) 78%, black 22%) var(--pdf-page-height),
         transparent var(--pdf-page-height),
-        transparent calc(var(--pdf-page-height) + var(--pdf-page-gap))
-      );
+        transparent calc(var(--pdf-page-height) + var(--pdf-page-gap)));
     box-shadow:
       0 1px 3px rgba(15, 23, 42, 0.08),
       0 24px 60px rgba(15, 23, 42, 0.14);
@@ -409,4 +403,7 @@
   }
 }
 
-
+/* .katex {
+  font-size: 20px !important;
+  margin-inline: auto;
+} */

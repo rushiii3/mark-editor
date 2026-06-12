@@ -1,7 +1,19 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Editor, { type OnMount } from "@monaco-editor/react";
+import dynamic from "next/dynamic";
+import { type OnMount } from "@monaco-editor/react";
+const Editor = dynamic(
+  async () => {
+    const mod = await import("@monaco-editor/react");
+    return mod.default;
+  },
+  {
+    ssr: false,
+    loading: () => <div>Loading Monaco...</div>
+  }
+);
+
 import { useTheme } from "next-themes";
 import type { SlashCommand, SlashMenuState } from "@/components/editor/types";
 
@@ -22,7 +34,7 @@ export function EditorPanel({
   slashMenuState,
   slashCommands,
   onSelectSlashCommand,
-  onCloseSlashMenu,
+  onCloseSlashMenu
 }: EditorPanelProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -66,17 +78,17 @@ export function EditorPanel({
             folding: false,
             scrollbar: {
               verticalScrollbarSize: 8,
-              horizontalScrollbarSize: 8,
+              horizontalScrollbarSize: 8
             },
             padding: { top: 12, bottom: 20 },
             smoothScrolling: true,
-            contextmenu: false,
+            contextmenu: true,
             automaticLayout: true,
             overviewRulerBorder: false,
             renderLineHighlight: "none",
             hideCursorInOverviewRuler: true,
             fontFamily:
-              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
           }}
         />
 
@@ -85,7 +97,7 @@ export function EditorPanel({
             className="absolute z-20 min-w-48 overflow-hidden rounded-xl border bg-popover shadow-xl"
             style={{
               top: slashMenuState.top,
-              left: slashMenuState.left,
+              left: slashMenuState.left
             }}
             onMouseDown={(event) => event.preventDefault()}
           >

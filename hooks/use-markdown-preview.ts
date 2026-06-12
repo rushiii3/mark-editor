@@ -1,12 +1,8 @@
 "use client";
 
-import { startTransition, useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useRef, useState, startTransition } from "react";
 import type { TocHeading } from "@/components/editor/types";
 import { processMarkdownPreview } from "@/lib/editor/markdown-preview";
-
-type UseMarkdownPreviewOptions = {
-  enabled: boolean;
-};
 
 type MarkdownPreviewState = {
   headings: TocHeading[];
@@ -17,64 +13,60 @@ type MarkdownPreviewState = {
 const INITIAL_STATE: MarkdownPreviewState = {
   headings: [],
   html: "<p>Open preview to render this document.</p>",
-  isLoading: false,
+  isLoading: false
 };
 
-export function useMarkdownPreview(
-  markdown: string,
-  options: UseMarkdownPreviewOptions,
-) {
-  const deferredMarkdown = useDeferredValue(markdown);
-  const [state, setState] = useState<MarkdownPreviewState>(INITIAL_STATE);
+export function useMarkdownPreview(markdown: string, enabled: boolean) {
+  const [state, setState] = useState(INITIAL_STATE);
+
+  const requestIdRef = useRef(0);
+  const previousMarkdownRef = useRef("");
 
   useEffect(() => {
-    if (!options.enabled) {
+    if (!enabled) {
       return;
     }
 
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      startTransition(() => {
-        setState((current) => ({
-          ...current,
-          isLoading: true,
-        }));
-      });
+    if (previousMarkdownRef.current === markdown) {
+      return;
+    }
 
-      processMarkdownPreview(deferredMarkdown)
-        .then((result) => {
-          if (cancelled) {
-            return;
-          }
+    previousMarkdownRef.current = markdown;
 
-          startTransition(() => {
-            setState({
-              headings: result.headings,
-              html: result.html,
-              isLoading: false,
-            });
-          });
-        })
-        .catch(() => {
-          if (cancelled) {
-            return;
-          }
+    const requestId = ++requestIdRef.current;
 
-          startTransition(() => {
-            setState({
-              headings: [],
-              html: "<p>We couldn&apos;t render the preview for this document.</p>",
-              isLoading: false,
-            });
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await processMarkdownPreview(markdown);
+
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        startTransition(() => {
+          setState({
+            headings: result.headings,
+            html: result.html,
+            isLoading: false
           });
         });
+      } catch {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        setState({
+          headings: [],
+          html: "<p>Failed to render preview.</p>",
+          isLoading: false
+        });
+      }
     }, 300);
 
     return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
+      clearTimeout(timer);
     };
-  }, [deferredMarkdown, options.enabled]);
+  }, [markdown, enabled]);
 
   return state;
 }

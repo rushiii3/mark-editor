@@ -12,7 +12,7 @@ type PreviewPanelProps = {
 export function PreviewPanel({
   html,
   previewRef,
-  previewMode = "web",
+  previewMode = "web"
 }: PreviewPanelProps) {
   const [pageCount, setPageCount] = useState(1);
 
@@ -30,7 +30,7 @@ export function PreviewPanel({
     const updatePageCount = () => {
       const contentHeight = Math.max(
         element.scrollHeight - verticalPaddingPx,
-        pageHeightPx,
+        pageHeightPx
       );
       setPageCount(Math.max(1, Math.ceil(contentHeight / pageHeightPx)));
     };
@@ -49,7 +49,7 @@ export function PreviewPanel({
   }, [html, previewMode, previewRef]);
 
   return (
-    <section className="flex h-full min-h-[320px] flex-1 flex-col overflow-hidden bg-white dark:bg-background">
+    <section className="flex h-full min-h-80 flex-1 flex-col overflow-hidden bg-white dark:bg-background">
       <ScrollArea className="h-full">
         <div className={previewMode === "pdf" ? "pdf-preview-canvas" : ""}>
           <div
@@ -57,19 +57,33 @@ export function PreviewPanel({
             style={
               previewMode === "pdf"
                 ? ({
-                    ["--pdf-page-count" as string]: String(pageCount),
+                    ["--pdf-page-count" as string]: String(pageCount)
                   } as CSSProperties)
                 : undefined
             }
           >
             <div
               ref={previewRef}
-              className={`mx-auto min-h-full w-full prose prose-slate prose-base dark:prose-invert
+              className={`mx-auto min-h-full w-full prose prose-neutral prose-base dark:prose-invert
 prose-hr:mt-1 prose-hr:mb-3
 prose-code:before:content-none prose-code:after:content-none 
-prose-code:px-1 prose-code:py-0.5 prose-code:rounded ${
-                previewMode === "pdf" ? "pdf-page-content" : "px-9 py-8"
-              }`}
+prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+
+[&_th]:border
+[&_td]:border
+
+[&_table]:border 
+[&_table]:border-gray-400
+[&_table]:w-full
+[&_th]:px-3
+[&_th]:py-2
+[&_td]:px-3
+[&_td]:py-2
+
+
+
+
+${previewMode === "pdf" ? "pdf-page-content" : "px-9 py-8"}`}
               dangerouslySetInnerHTML={{ __html: html }}
             />
           </div>
