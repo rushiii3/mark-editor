@@ -17,8 +17,6 @@ export type ToolbarAction =
   | "code"
   | "code-block"
   | "link"
-  | "table"
-  | "image"
   | "toggle"
   | "checkbox"
   | "unordered-list"

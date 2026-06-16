@@ -12,6 +12,7 @@ import {
   FileCode,
   FileExportIcon,
   FullScreenIcon,
+  GalleryThumbnailsFreeIcons,
   Heading1,
   Heading2,
   Heading3,
@@ -37,6 +38,17 @@ import {
   TextUnderlineIcon
 } from "@hugeicons/core-free-icons";
 
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+
 import type { EditorViewMode, ToolbarAction } from "@/components/editor/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,20 +66,23 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import { Input } from "../ui/input";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator
-} from "@/components/ui/field";
+
+import { uploadLocalImage } from "@/lib/editor/image-upload";
+import { ToolbarDropdown } from "./toolbar-dropdown";
+import { LinkForm } from "./forms/link-form";
+import { TableForm } from "./forms/table-form";
+import { ImageForm } from "./forms/image-form";
+import { ImageGallery } from "./image-gallery";
+import { useImageStore } from "@/store/imageStore";
 
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
   onToggleTheme: () => void;
   onViewModeChange: (mode: EditorViewMode) => void;
   viewMode: EditorViewMode;
+  onInsertImage: (url: string, alt: string) => void;
+  onInsertTable: (rows: number, columns: number) => void;
+  onInsertLink: (url: string, alt: string) => void;
 };
 
 type IconAction = {
@@ -96,12 +111,6 @@ const FORMATTING_ACTIONS: IconAction[] = [
 const CODE_ACTIONS: IconAction[] = [
   { action: "code", icon: CodeIcon, label: "Inline Code" },
   { action: "code-block", icon: FileCode, label: "Code Block" }
-];
-
-const INSERT_ACTIONS: IconAction[] = [
-  { action: "link", icon: Link01FreeIcons, label: "Link" },
-  { action: "table", icon: TableIcon, label: "Table" },
-  { action: "image", icon: ImageUploadFreeIcons, label: "Image" }
 ];
 
 const LIST_ACTIONS: IconAction[] = [
@@ -192,6 +201,9 @@ export function Toolbar({
   onAction,
   onToggleTheme,
   onViewModeChange,
+  onInsertImage,
+  onInsertTable,
+  onInsertLink,
   viewMode
 }: ToolbarProps) {
   const topMode =
@@ -202,6 +214,24 @@ export function Toolbar({
         : viewMode === "preview"
           ? "preview"
           : "split";
+
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const { url, alt } = await uploadLocalImage(file);
+    onInsertImage(url, alt);
+
+    event.target.value = "";
+  };
+
+  const images = useImageStore((state) => state.images);
+  const clearImage = useImageStore((state) => state.clearImage);
 
   return (
     <header className="border-b bg-background">
@@ -339,57 +369,37 @@ export function Toolbar({
           ))}
 
           <Separator orientation="vertical" className="mx-1.5 h-6" />
-          {INSERT_ACTIONS.map((action) => (
+          {/* {INSERT_ACTIONS.map((action) => (
             <IconButton
               key={action.label}
               action={action}
               onAction={onAction}
             />
-          ))}
+          ))} */}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-lg"
-                className="rounded-md px-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <HugeiconsIcon icon={IdeaIcon} size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-60">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Insert Image</DropdownMenuLabel>
-                <FieldGroup>
-                  <Field>
-                    <Input
-                      id="url"
-                      type="url"
-                      placeholder="Image URL"
-                      required
-                    />
-                  </Field>
-                  <Field>
-                    <Input
-                      id="altText"
-                      type="text"
-                      placeholder="Image Alt Text"
-                      required
-                    />
-                  </Field>
-                  <Field>
-                    <Button variant={"default"} type="button">
-                      Add
-                    </Button>
-                  </Field>
-                  <FieldSeparator>OR</FieldSeparator>
-                  <Field>
-                    <Input id="picture" type="file" accept="" />
-                  </Field>
-                </FieldGroup>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ToolbarDropdown
+            label="Insert Link"
+            icon={<HugeiconsIcon icon={Link01FreeIcons} size={16} />}
+          >
+            <LinkForm onSubmit={onInsertLink} />
+          </ToolbarDropdown>
+
+          <ToolbarDropdown
+            label="Insert Table"
+            icon={<HugeiconsIcon icon={TableIcon} size={16} />}
+          >
+            <TableForm onSubmit={onInsertTable} />
+          </ToolbarDropdown>
+
+          <ToolbarDropdown
+            label="Insert Image"
+            icon={<HugeiconsIcon icon={ImageUploadFreeIcons} size={16} />}
+          >
+            <ImageForm
+              onInsertUrl={onInsertImage}
+              onUpload={handleImageUpload}
+            />
+          </ToolbarDropdown>
 
           <Separator orientation="vertical" className="mx-1.5 h-6" />
           {LIST_ACTIONS.map((action) => (
@@ -406,33 +416,50 @@ export function Toolbar({
             onAction={onAction}
           />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-lg"
-                className="rounded-md px-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          <ToolbarDropdown
+            label="Callouts"
+            icon={<HugeiconsIcon icon={IdeaIcon} size={16} />}
+          >
+            {CALLOUTS.map((callout) => (
+              <DropdownMenuItem
+                key={callout.label}
+                onClick={() => onAction(callout.action)}
               >
-                <HugeiconsIcon icon={IdeaIcon} size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Callouts</DropdownMenuLabel>
-                {CALLOUTS.map((callout) => (
-                  <DropdownMenuItem
-                    key={callout.label}
-                    onClick={() => onAction(callout.action)}
-                  >
-                    {callout.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {callout.label}
+              </DropdownMenuItem>
+            ))}
+          </ToolbarDropdown>
         </div>
 
         <div className="flex min-w-max items-center gap-2 px-2 py-1">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="lg" variant={"ghost"}>
+                <HugeiconsIcon icon={GalleryThumbnailsFreeIcons} size={16} />
+                Gallery
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-11/12 sm:max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Image Gallery</DialogTitle>
+                <DialogDescription>Manage uploaded images</DialogDescription>
+              </DialogHeader>
+
+              <div className="max-h-[70vh] overflow-y-auto">
+                <ImageGallery onInsert={onInsertImage} />
+              </div>
+              {images.length > 0 && (
+                <DialogFooter className="sm:justify-end">
+                  <Button onClick={() => clearImage()} variant={"destructive"}>
+                    Clear all images
+                  </Button>
+                  <DialogClose asChild>
+                    <Button type="button">Close</Button>
+                  </DialogClose>
+                </DialogFooter>
+              )}
+            </DialogContent>
+          </Dialog>
           <ToolTipWrapper label="Export PDF">
             <Button
               type="button"

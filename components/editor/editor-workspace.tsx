@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { OnMount } from "@monaco-editor/react";
 import type { editor, IRange, Position } from "monaco-editor";
 import { useTheme } from "next-themes";
@@ -36,7 +36,6 @@ import type {
   EditorViewMode,
   SlashCommand,
   SlashMenuState,
-  // TocHeading,
   ToolbarAction
 } from "@/components/editor/types";
 import {
@@ -47,6 +46,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Sidebar } from "./sidebar";
 import { useMarkdownPreview } from "@/hooks/use-markdown-preview";
+import { useFileStore } from "@/store/file-store";
+import { getDocument, saveDocument } from "@/db/documents";
 
 const starterMarkdown = `# Markdown PDF Studio
 
@@ -95,12 +96,50 @@ export function EditorWorkspace() {
   const previewRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const editorContainerRef = useRef<HTMLElement | null>(null);
-
   const previewEnabled = viewMode !== "write";
   const { headings, html: previewHtml } = useMarkdownPreview(
     markdown,
     previewEnabled
   );
+
+  const activeFileId = useFileStore((s) => s.activeFileId);
+
+  const [isLoadingDocument, setIsLoadingDocument] = useState(false);
+
+  useEffect(() => {
+    if (!activeFileId) return;
+
+    const loadDocument = async () => {
+      setIsLoadingDocument(true);
+
+      try {
+        const document = await getDocument(activeFileId);
+
+        setMarkdown(document?.content ?? "");
+      } finally {
+        setIsLoadingDocument(false);
+      }
+    };
+
+    void loadDocument();
+  }, [activeFileId]);
+  useEffect(() => {
+    if (!activeFileId) return;
+
+    const timeout = setTimeout(async () => {
+      const existing = await getDocument(activeFileId);
+
+      await saveDocument({
+        id: activeFileId,
+        name: existing?.name ?? "Untitled",
+        content: markdown,
+        createdAt: existing?.createdAt ?? Date.now(),
+        updatedAt: Date.now()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [markdown, activeFileId]);
 
   const closeSlashMenu = useCallback(() => {
     setSlashMenuState((current) =>
@@ -319,15 +358,6 @@ export function EditorWorkspace() {
         case "code-block":
           applyCodeBlock(editorInstance);
           break;
-        case "link":
-          insertLink(editorInstance);
-          break;
-        case "table":
-          insertTable(editorInstance);
-          break;
-        case "image":
-          insertImage(editorInstance);
-          break;
         case "toggle":
           applyToggle(editorInstance);
           break;
@@ -430,6 +460,62 @@ export function EditorWorkspace() {
   const chars = markdown.length;
   const readingMinutes = Math.max(1, Math.ceil(words / 200));
 
+  const handleInsertImage = useCallback((url: string, alt: string) => {
+    const editorInstance = editorRef.current;
+    if (!editorInstance) {
+      return;
+    }
+    const cmd = `![${alt}](${url})`;
+
+    insertImage(editorInstance, cmd);
+  }, []);
+
+  const handleTableInput = useCallback((rows: number, columns: number) => {
+    const editorInstance = editorRef.current;
+
+    if (!editorInstance) {
+      return;
+    }
+
+    const headers = Array.from(
+      { length: columns },
+      (_, index) => `Column ${index + 1}`
+    );
+
+    const separator = Array.from({ length: columns }, () => "--------");
+
+    const bodyRows = Array.from(
+      { length: rows },
+      (_, rowIndex) =>
+        `| ${Array.from(
+          { length: columns },
+          (_, colIndex) => `Cell ${rowIndex + 1}-${colIndex + 1}`
+        ).join(" | ")} |`
+    );
+
+    const table = [
+      "",
+      `| ${headers.join(" | ")} |`,
+      `| ${separator.join(" | ")} |`,
+      ...bodyRows,
+      ""
+    ].join("\n");
+
+    insertTable(editorInstance, table);
+  }, []);
+
+  const handleLinkInput = useCallback((url: string, altText: string) => {
+    const editorInstance = editorRef.current;
+
+    if (!editorInstance) {
+      return;
+    }
+
+    const cmd = `[${altText}](${url})`;
+
+    insertLink(editorInstance, cmd);
+  }, []);
+
   const contentPane = (
     <div className="h-[calc(100vh-150px)]">
       {/* Sidebar */}
@@ -502,13 +588,16 @@ export function EditorWorkspace() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onToggleTheme={handleToggleTheme}
+        onInsertImage={handleInsertImage}
+        onInsertTable={handleTableInput}
+        onInsertLink={handleLinkInput}
       />
 
       {contentPane}
 
       <Separator />
 
-      <footer className="flex min-h-9 items-center gap-6 overflow-x-auto px-4 text-sm text-muted-foreground">
+      <footer className=" min-h-9 items-center gap-6 overflow-x-auto px-4 text-sm text-muted-foreground md:flex hidden">
         <span>Words: {words}</span>
         <span>Chars: {chars}</span>
         <span>Reading: {readingMinutes} min</span>

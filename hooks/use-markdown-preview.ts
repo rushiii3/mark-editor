@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, startTransition } from "react";
 import type { TocHeading } from "@/components/editor/types";
 import { processMarkdownPreview } from "@/lib/editor/markdown-preview";
+import { useTheme } from "next-themes";
 
 type MarkdownPreviewState = {
   headings: TocHeading[];
@@ -16,28 +17,39 @@ const INITIAL_STATE: MarkdownPreviewState = {
   isLoading: false
 };
 
-export function useMarkdownPreview(markdown: string, enabled: boolean) {
+export function useMarkdownPreview(
+  markdown: string,
+  enabled: boolean
+  // theme: string | undefined
+) {
   const [state, setState] = useState(INITIAL_STATE);
+  const { theme } = useTheme();
 
   const requestIdRef = useRef(0);
-  const previousMarkdownRef = useRef("");
+  const previousKeyRef = useRef("");
 
   useEffect(() => {
     if (!enabled) {
       return;
     }
 
-    if (previousMarkdownRef.current === markdown) {
+    const key = `${theme}:${markdown}`;
+
+    if (previousKeyRef.current === key) {
       return;
     }
 
-    previousMarkdownRef.current = markdown;
+    previousKeyRef.current = key;
 
     const requestId = ++requestIdRef.current;
 
     const timer = window.setTimeout(async () => {
       try {
-        const result = await processMarkdownPreview(markdown);
+        const result = await processMarkdownPreview(
+          markdown,
+          theme === "dark" ? "dark" : "light"
+        );
+        console.log(theme);
 
         if (requestId !== requestIdRef.current) {
           return;
@@ -66,7 +78,7 @@ export function useMarkdownPreview(markdown: string, enabled: boolean) {
     return () => {
       clearTimeout(timer);
     };
-  }, [markdown, enabled]);
+  }, [markdown, enabled, theme]);
 
   return state;
 }

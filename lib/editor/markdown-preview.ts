@@ -1,5 +1,6 @@
 import DOMPurify from "dompurify";
 import type { TocHeading } from "@/components/editor/types";
+import { resolveLocalImages } from "./resolve-local-images";
 
 export type MarkdownPreviewResult = {
   headings: TocHeading[];
@@ -72,24 +73,26 @@ function extractHeadings(html: string): MarkdownPreviewResult {
 
   const headings: TocHeading[] = [];
 
-  document.body.querySelectorAll("h1,h2,h3,h4").forEach((heading, index) => {
-    const text = heading.textContent?.trim() ?? `Section ${index + 1}`;
+  document.body
+    .querySelectorAll("h1,h2,h3,h4,h5,h6")
+    .forEach((heading, index) => {
+      const text = heading.textContent?.trim() ?? `Section ${index + 1}`;
 
-    const baseId = text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+      const baseId = text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 
-    const id = heading.id || baseId || `section-${index + 1}`;
+      const id = heading.id || baseId || `section-${index + 1}`;
 
-    heading.id = id;
+      heading.id = id;
 
-    headings.push({
-      id,
-      level: Number(heading.tagName.slice(1)),
-      text
+      headings.push({
+        id,
+        level: Number(heading.tagName.slice(1)),
+        text
+      });
     });
-  });
 
   return {
     headings,
@@ -98,9 +101,12 @@ function extractHeadings(html: string): MarkdownPreviewResult {
 }
 
 export async function processMarkdownPreview(
-  markdown: string
+  markdown: string,
+  theme: "light" | "dark"
 ): Promise<MarkdownPreviewResult> {
-  const cached = previewCache.get(markdown);
+  const cacheKey = `${theme}:${markdown}`;
+
+  const cached = previewCache.get(cacheKey);
 
   if (cached) {
     return cached;
@@ -187,7 +193,8 @@ export async function processMarkdownPreview(
     const { default: rehypePrettyCode } = await import("rehype-pretty-code");
 
     processor.use(rehypePrettyCode, {
-      theme: "github-dark",
+      theme: theme === "dark" ? "github-dark" : "github-light",
+
       keepBackground: true,
       defaultLang: "plaintext",
       grid: false,
@@ -205,7 +212,9 @@ export async function processMarkdownPreview(
 
   const rawHtml = String(file);
 
-  const html = features.hasRawHtml ? sanitizeHtml(rawHtml) : rawHtml;
+  const resolvedHtml = await resolveLocalImages(rawHtml);
+
+  const html = features.hasRawHtml ? sanitizeHtml(resolvedHtml) : resolvedHtml;
 
   const result = extractHeadings(html);
 

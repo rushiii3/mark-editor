@@ -22,10 +22,10 @@ export function applyWrap(
 
   const selectedText = model.getValueInRange(selection);
   const insertText = `${prefix}${selectedText}${suffix}`;
-  
+
   const startOffset = model.getOffsetAt({
     lineNumber: selection.startLineNumber,
-    column: selection.startColumn,
+    column: selection.startColumn
   });
 
   editorInstance.pushUndoStop();
@@ -33,23 +33,27 @@ export function applyWrap(
     {
       range: selection,
       text: insertText,
-      forceMoveMarkers: true,
-    },
+      forceMoveMarkers: true
+    }
   ]);
   editorInstance.pushUndoStop();
 
   if (selectedText) {
     const selectionStart = model.getPositionAt(startOffset + prefix.length);
-    const selectionEnd = model.getPositionAt(startOffset + prefix.length + selectedText.length);
+    const selectionEnd = model.getPositionAt(
+      startOffset + prefix.length + selectedText.length
+    );
 
     editorInstance.setSelection({
       startLineNumber: selectionStart.lineNumber,
       startColumn: selectionStart.column,
       endLineNumber: selectionEnd.lineNumber,
-      endColumn: selectionEnd.column,
+      endColumn: selectionEnd.column
     });
   } else {
-    editorInstance.setPosition(model.getPositionAt(startOffset + prefix.length));
+    editorInstance.setPosition(
+      model.getPositionAt(startOffset + prefix.length)
+    );
   }
 
   editorInstance.focus();
@@ -76,10 +80,10 @@ export function applyLinePrefix(
         startLineNumber: line,
         startColumn: 1,
         endLineNumber: line,
-        endColumn: 1,
+        endColumn: 1
       },
       text: prefix,
-      forceMoveMarkers: true,
+      forceMoveMarkers: true
     });
   }
 
@@ -92,7 +96,7 @@ export function applyLinePrefix(
     startLineNumber: startLine,
     startColumn: 1,
     endLineNumber: endLine,
-    endColumn: endLineLength,
+    endColumn: endLineLength
   });
   editorInstance.focus();
 }
@@ -105,7 +109,9 @@ export function applyItalic(editorInstance: editor.IStandaloneCodeEditor) {
   applyWrap(editorInstance, "*");
 }
 
-export function applyStrikethrough(editorInstance: editor.IStandaloneCodeEditor) {
+export function applyStrikethrough(
+  editorInstance: editor.IStandaloneCodeEditor
+) {
   applyWrap(editorInstance, "~~");
 }
 
@@ -152,16 +158,16 @@ export function insertSnippet(
     {
       range: selection,
       text: text,
-      forceMoveMarkers: true,
-    },
+      forceMoveMarkers: true
+    }
   ]);
   editorInstance.pushUndoStop();
 
   const startOffset = model.getOffsetAt({
     lineNumber: selection.startLineNumber,
-    column: selection.startColumn,
+    column: selection.startColumn
   });
-  
+
   const position = model.getPositionAt(startOffset + cursorOffset);
   editorInstance.setPosition(position);
   editorInstance.focus();
@@ -181,7 +187,7 @@ export function replaceSnippet(
 
   const startOffset = model.getOffsetAt({
     lineNumber: range.startLineNumber,
-    column: range.startColumn,
+    column: range.startColumn
   });
 
   editorInstance.pushUndoStop();
@@ -189,8 +195,8 @@ export function replaceSnippet(
     {
       range,
       text,
-      forceMoveMarkers: true,
-    },
+      forceMoveMarkers: true
+    }
   ]);
   editorInstance.pushUndoStop();
 
@@ -199,27 +205,36 @@ export function replaceSnippet(
   editorInstance.focus();
 }
 
-export function insertHorizontalLine(editorInstance: editor.IStandaloneCodeEditor) {
+export function insertHorizontalLine(
+  editorInstance: editor.IStandaloneCodeEditor
+) {
   insertSnippet(editorInstance, "\n---\n", 5);
 }
 
-export function insertLink(editorInstance: editor.IStandaloneCodeEditor) {
-  insertSnippet(editorInstance, "[text](url)", 1);
+export function insertLink(
+  editorInstance: editor.IStandaloneCodeEditor,
+  markdown: string
+) {
+  insertSnippet(editorInstance, markdown, 1);
 }
 
-export function insertImage(editorInstance: editor.IStandaloneCodeEditor) {
-  insertSnippet(editorInstance, "![alt](url)", 2);
+export function insertImage(
+  editorInstance: editor.IStandaloneCodeEditor,
+  markdown: string
+) {
+  insertSnippet(editorInstance, markdown, 2);
 }
 
-export function insertTable(editorInstance: editor.IStandaloneCodeEditor) {
-  const table = "\n| Column 1 | Column 2 |\n| -------- | -------- |\n| Cell 1   | Cell 2   |\n";
+export function insertTable(
+  editorInstance: editor.IStandaloneCodeEditor,
+  table: string
+) {
   insertSnippet(editorInstance, table, 13);
 }
 
 export function applyToggle(editorInstance: editor.IStandaloneCodeEditor) {
   insertSnippet(editorInstance, ":::collapse[Title]\n\nYour content\n\n:::");
 }
-
 
 export function applyCodeBlock(editorInstance: editor.IStandaloneCodeEditor) {
   const selection = editorInstance.getSelection();
@@ -231,10 +246,9 @@ export function applyCodeBlock(editorInstance: editor.IStandaloneCodeEditor) {
 
   const selectedText = model.getValueInRange(selection);
   const text = `\n\`\`\`\n${selectedText}\n\`\`\`\n`;
-  
+
   insertSnippet(editorInstance, text, 5);
 }
-
 
 export function applyCallout(
   editorInstance: editor.IStandaloneCodeEditor,
@@ -243,7 +257,6 @@ export function applyCallout(
   const text = `\n:::callout[${type}]\n\nYour content\n\n:::\n`;
   insertSnippet(editorInstance, text, 6);
 }
-
 
 export function applyLineBreak(editorInstance: editor.IStandaloneCodeEditor) {
   insertSnippet(editorInstance, "<br>", 1);
