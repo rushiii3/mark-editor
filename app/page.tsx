@@ -12,7 +12,7 @@ import { Footer } from "@/components/landing/footer";
 import { Community } from "@/components/landing/community";
 
 export const metadata = {
-  title: "Markups - Local-First Developer Markdown Studio",
+  title: "Manus - Local-First Developer Markdown Studio",
   description:
     "A free, open-source, offline-ready markdown editor and PDF studio with slash commands, A4 print visualizer, and local storage persistence.",
   keywords: [
@@ -24,7 +24,7 @@ export const metadata = {
     "Developer tools"
   ],
   openGraph: {
-    title: "Markups - Local-First Markdown Studio",
+    title: "Manus - Local-First Markdown Studio",
     description:
       "Write clean markdown, generate pixel-perfect A4 documents offline.",
     type: "website"

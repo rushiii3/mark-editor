@@ -1,11 +1,16 @@
 "use client";
 
-import { motion } from "framer-motion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const faqs = [
   {
     q: "Is it really free and open source?",
-    a: "Yes, Markups is 100% free and open-source under the MIT license. You can inspect the code, modify it, host it yourself, or contribute directly to the repository."
+    a: "Yes, Manus is 100% free and open-source under the MIT license. You can inspect the code, modify it, host it yourself, or contribute directly to the repository."
   },
   {
     q: "Does it work completely offline?",
@@ -33,42 +38,30 @@ export function FAQ() {
   return (
     <section
       id="faq"
-      className="relative  py-20 md:py-28 border-t border-white/5"
+      className="relative py-20 md:py-28 border-t border-white/5 bg-background text-foreground"
     >
       <div className="mx-auto max-w-4xl px-6">
         <div className="flex flex-col items-center text-center mb-16">
           <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
             FAQ
           </span>
-          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-3">
+          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight mt-3">
             Frequently Asked Questions
           </h3>
         </div>
 
-        <div className="space-y-4">
+        <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (
-            <motion.details
-              key={index}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
-              className="group border border-white/5 bg-[#0F0F0F] rounded-2xl overflow-hidden [&_summary::-webkit-details-marker]:hidden"
-            >
-              <summary className="flex items-center justify-between p-6 cursor-pointer select-none font-bold text-white hover:bg-white/5 transition-colors duration-150">
-                <span className="text-sm sm:text-base tracking-tight">
-                  {faq.q}
-                </span>
-                <span className="ml-4 flex h-6 w-6 items-center justify-center rounded-full bg-white/5 text-slate-400 group-open:rotate-180 transition-transform duration-200">
-                  ▼
-                </span>
-              </summary>
-              <div className="px-6 pb-6 pt-2 border-t border-white/5 bg-[#0C0C0C]/50 text-xs sm:text-sm text-slate-400 leading-relaxed">
+            <AccordionItem key={index} value={`faq-${index}`}>
+              <AccordionTrigger className="text-sm sm:text-base font-bold hover:text-amber-500">
+                {faq.q}
+              </AccordionTrigger>
+              <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                 {faq.a}
-              </div>
-            </motion.details>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       </div>
     </section>
   );

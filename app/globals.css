@@ -407,3 +407,8 @@
   font-size: 20px !important;
   margin-inline: auto;
 } */
+
+::view-transition-old(root), ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const previewTabs = [
   {
@@ -20,15 +19,13 @@ const previewTabs = [
         </div>
         <div className="space-y-1.5">
           <div>
-            <span className="text-slate-600 select-none mr-3">1</span># Project
-            README
+            <span className="text-slate-600 select-none mr-3">1</span># Project README
           </div>
           <div>
             <span className="text-slate-600 select-none mr-3">2</span>
           </div>
           <div>
-            <span className="text-slate-600 select-none mr-3">3</span>This is a
-            local-first editor with advanced formatting.
+            <span className="text-slate-600 select-none mr-3">3</span>This is a local-first editor with advanced formatting.
           </div>
           <div>
             <span className="text-slate-600 select-none mr-3">4</span>
@@ -112,8 +109,7 @@ const previewTabs = [
             Local Database Sandbox
           </h4>
           <p className="text-[11px] text-slate-500 mt-1 max-w-[200px] leading-relaxed">
-            All files are stored in your browser&apos;s client IndexedDB store.
-            No servers involved.
+            All files are stored in your browser&apos;s client IndexedDB store. No servers involved.
           </p>
         </div>
       </div>
@@ -158,15 +154,10 @@ const previewTabs = [
 ];
 
 export function ProductPreview() {
-  const [activeTab, setActiveTab] = useState("editor");
-
-  const currentTab =
-    previewTabs.find((t) => t.id === activeTab) || previewTabs[0];
-
   return (
-    <section className="relative  py-20 md:py-28 overflow-hidden border-t border-white/5">
+    <section className="relative py-20 md:py-28 overflow-hidden border-t border-white/5">
       <div className="mx-auto max-w-7xl px-6 md:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <Tabs defaultValue="editor" orientation="vertical" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left copy & selector */}
           <div className="lg:col-span-5 space-y-6">
             <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
@@ -176,29 +167,23 @@ export function ProductPreview() {
               A Studio Designed for Developer Workflows.
             </h3>
 
-            {/* Tab buttons */}
-            <div className="flex flex-col gap-2 mt-8">
+            {/* Tab list */}
+            <TabsList className="flex flex-col gap-2 bg-transparent p-0 w-full h-auto">
               {previewTabs.map((tab) => (
-                <button
+                <TabsTrigger
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? "border-amber-500/30 bg-amber-500/5 shadow-md shadow-amber-500/5"
-                      : "border-white/5 hover:border-white/10 hover:bg-white/5"
-                  }`}
+                  value={tab.id}
+                  className="flex flex-col items-start p-4 rounded-xl border border-white/5 text-left hover:border-white/10 hover:bg-white/5 data-[state=active]:border-amber-500/30 data-[state=active]:bg-amber-500/5 data-[state=active]:text-amber-500 w-full h-auto relative"
                 >
-                  <span
-                    className={`text-sm font-bold ${activeTab === tab.id ? "text-amber-500" : "text-white"}`}
-                  >
+                  <span className="text-sm font-bold text-white group-data-[state=active]/tabs-trigger:text-amber-500">
                     {tab.label}
                   </span>
-                  <span className="text-xs text-slate-500 mt-1">
+                  <span className="text-xs text-slate-500 mt-1 font-normal">
                     {tab.title}
                   </span>
-                </button>
+                </TabsTrigger>
               ))}
-            </div>
+            </TabsList>
           </div>
 
           {/* Right Mockup display */}
@@ -210,27 +195,20 @@ export function ProductPreview() {
                 <div className="h-2.5 w-2.5 rounded-full bg-white/10"></div>
                 <div className="h-2.5 w-2.5 rounded-full bg-white/10"></div>
                 <div className="mx-auto text-[10px] text-slate-500 font-mono">
-                  markups.dev/workspace
+                  manus.dev/workspace
                 </div>
               </div>
 
               <div className="h-[calc(100%-27px)] overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentTab.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.25 }}
-                    className="h-full"
-                  >
-                    {currentTab.mockup}
-                  </motion.div>
-                </AnimatePresence>
+                {previewTabs.map((tab) => (
+                  <TabsContent key={tab.id} value={tab.id} className="h-full mt-0">
+                    {tab.mockup}
+                  </TabsContent>
+                ))}
               </div>
             </div>
           </div>
-        </div>
+        </Tabs>
       </div>
     </section>
   );

@@ -14,7 +14,7 @@ export function Footer() {
                 M
               </div>
               <span className="text-base font-bold tracking-tight text-white">
-                Markups
+                Manus
               </span>
             </Link>
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
@@ -125,7 +125,7 @@ export function Footer() {
         {/* Bottom copyright */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 text-xs text-slate-500">
           <span>
-            &copy; {new Date().getFullYear()} Markups Project. All rights
+            &copy; {new Date().getFullYear()} Manus Project. All rights
             reserved.
           </span>
           <div className="flex items-center gap-4">

@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export function WhyOpenSource() {
   return (
     <section
       id="why-open-source"
-      className="relative  py-20 md:py-28 overflow-hidden"
+      className="relative py-20 md:py-28 overflow-hidden"
     >
       {/* Background radial highlight */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none select-none"></div>
@@ -28,7 +29,7 @@ export function WhyOpenSource() {
             </h3>
             <p className="text-slate-400 mt-6 leading-relaxed">
               We believe developers deserve tools that respect their
-              independence. Markups runs entirely in your browser’s sandbox,
+              independence. Manus runs entirely in your browser’s sandbox,
               using your local storage as a database.
             </p>
 
@@ -87,75 +88,76 @@ export function WhyOpenSource() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="rounded-2xl border border-white/10 bg-[#0F0F0F] p-4 shadow-xl"
+            className="flex w-full animate-in fade-in duration-300"
           >
-            <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-4 select-none">
-              <span className="text-xs text-slate-500 font-mono">
-                DevTools &gt; Application &gt; IndexedDB
-              </span>
-            </div>
+            <Card className="w-full bg-card/40 border-white/10 hover:border-white/20 transition-all duration-300">
+              <CardHeader className="border-b border-white/5 py-3 px-4">
+                <CardTitle className="text-xs text-muted-foreground font-mono font-normal tracking-wide">
+                  DevTools &gt; Application &gt; IndexedDB
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 font-mono text-[11px] sm:text-xs text-slate-400 leading-relaxed overflow-x-auto">
+                <div className="text-slate-600">
+                  {"// Document storage inspect"}
+                </div>
+                <div>
+                  <span className="text-emerald-500">IndexedDB</span>.open(
+                  <span className="text-amber-500">
+                    &quot;markdown-editor&quot;
+                  </span>
+                  , <span className="text-blue-400">2</span>)
+                </div>
+                <div className="pl-4">
+                  .onUpgrade(<span className="text-purple-400">db</span> =&gt;
+                  &#123;
+                </div>
+                <div className="pl-8">
+                  db.createObjectStore(
+                  <span className="text-amber-500">&quot;documents&quot;</span>,
+                  &#123; keyPath:{" "}
+                  <span className="text-amber-500">&quot;id&quot;</span> &#125;)
+                </div>
+                <div className="pl-8 text-slate-500">
+                  {"// Index files by date for fast loading"}
+                </div>
+                <div className="pl-8">
+                  store.createIndex(
+                  <span className="text-amber-500">&quot;by-createdAt&quot;</span>
+                  , <span className="text-amber-500">&quot;createdAt&quot;</span>)
+                </div>
+                <div className="pl-4">&#125;)</div>
 
-            <div className="font-mono text-[11px] sm:text-xs text-slate-400 space-y-2 leading-relaxed overflow-x-auto">
-              <div className="text-slate-600">
-                {"// Document storage inspect"}
-              </div>
-              <div>
-                <span className="text-emerald-500">IndexedDB</span>.open(
-                <span className="text-amber-500">
-                  &quot;markdown-editor&quot;
-                </span>
-                , <span className="text-blue-400">2</span>)
-              </div>
-              <div className="pl-4">
-                .onUpgrade(<span className="text-purple-400">db</span> =&gt;
-                &#123;
-              </div>
-              <div className="pl-8">
-                db.createObjectStore(
-                <span className="text-amber-500">&quot;documents&quot;</span>,
-                &#123; keyPath:{" "}
-                <span className="text-amber-500">&quot;id&quot;</span> &#125;)
-              </div>
-              <div className="pl-8 text-slate-500">
-                {"// Index files by date for fast loading"}
-              </div>
-              <div className="pl-8">
-                store.createIndex(
-                <span className="text-amber-500">&quot;by-createdAt&quot;</span>
-                , <span className="text-amber-500">&quot;createdAt&quot;</span>)
-              </div>
-              <div className="pl-4">&#125;)</div>
-
-              <div className="border-t border-white/5 pt-3 mt-3">
-                <span className="text-slate-600">
-                  {"// Active DB Schema Value"}
-                </span>
-              </div>
-              <div className="bg-[#0A0A0A] p-3 rounded-lg border border-white/5 space-y-1 text-slate-300">
-                <div>&#123;</div>
-                <div className="pl-4">
-                  <span className="text-amber-500">id</span>:
-                  &quot;69e13455-e138-4f26-aa16-9b689260f202&quot;,
+                <div className="border-t border-white/5 pt-3 mt-3">
+                  <span className="text-slate-600">
+                    {"// Active DB Schema Value"}
+                  </span>
                 </div>
-                <div className="pl-4">
-                  <span className="text-amber-500">name</span>:
-                  &quot;Untitled.md&quot;,
+                <div className="bg-[#0A0A0A] p-3 rounded-lg border border-white/5 space-y-1 text-slate-300">
+                  <div>&#123;</div>
+                  <div className="pl-4">
+                    <span className="text-amber-500">id</span>:
+                    &quot;69e13455-e138-4f26-aa16-9b689260f202&quot;,
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-amber-500">name</span>:
+                    &quot;Untitled.md&quot;,
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-amber-500">content</span>: &quot;#
+                    Welcome to Manus...&quot;,
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-amber-500">createdAt</span>:
+                    1718582400000,
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-amber-500">updatedAt</span>:
+                    1718582400500
+                  </div>
+                  <div>&#125;</div>
                 </div>
-                <div className="pl-4">
-                  <span className="text-amber-500">content</span>: &quot;#
-                  Welcome to Markups...&quot;,
-                </div>
-                <div className="pl-4">
-                  <span className="text-amber-500">createdAt</span>:
-                  1718582400000,
-                </div>
-                <div className="pl-4">
-                  <span className="text-amber-500">updatedAt</span>:
-                  1718582400500
-                </div>
-                <div>&#125;</div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
       </div>

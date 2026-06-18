@@ -1,6 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
 
 const features = [
   {
@@ -127,7 +133,7 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="relative  py-20 md:py-28">
+    <section id="features" className="relative py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-6 md:px-8">
         <div className="flex flex-col items-center text-center mb-16">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500">
@@ -146,21 +152,24 @@ export function Features() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group relative flex flex-col p-6 rounded-2xl border border-white/5 bg-[#0F0F0F] hover:border-white/10 transition-all duration-300"
+              className="flex"
             >
-              {/* Card glowing light effect */}
-              <div className="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-amber-500/0 via-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-amber-500/0 transition-all duration-500 opacity-60"></div>
+              <Card className="group relative flex flex-col w-full hover:border-white/10 transition-all duration-300 bg-card/40">
+                {/* Card glowing light effect */}
+                <div className="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-amber-500/0 via-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-amber-500/0 transition-all duration-500 opacity-60"></div>
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 text-amber-500 mb-5 group-hover:bg-amber-500/10 group-hover:text-amber-400 transition-colors duration-300">
-                {feature.icon}
-              </div>
-
-              <h4 className="text-lg font-bold text-white tracking-tight">
-                {feature.title}
-              </h4>
-              <p className="text-sm text-slate-400 mt-2 leading-relaxed">
-                {feature.description}
-              </p>
+                <CardHeader className="flex flex-col gap-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 text-amber-500 group-hover:bg-amber-500/10 group-hover:text-amber-400 transition-colors duration-300">
+                    {feature.icon}
+                  </div>
+                  <CardTitle className="text-lg font-bold text-white tracking-tight">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
             </motion.div>
           ))}
         </div>

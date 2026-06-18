@@ -1,6 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 
 const communityBlocks = [
   {
@@ -72,7 +79,7 @@ export function Community() {
   return (
     <section
       id="community"
-      className="relative  py-20 md:py-28 overflow-hidden border-t border-white/5"
+      className="relative py-20 md:py-28 overflow-hidden border-t border-white/5"
     >
       <div className="mx-auto max-w-7xl px-6 md:px-8">
         <div className="flex flex-col items-center text-center mb-16">
@@ -83,7 +90,7 @@ export function Community() {
             Open for Collaboration
           </h3>
           <p className="max-w-xl text-slate-400 mt-4 text-xs sm:text-sm leading-relaxed">
-            Markups is shaped by developer feedback. Contribute to security
+            Manus is shaped by developer feedback. Contribute to security
             improvements, style templates, or code cleanups directly on GitHub.
           </p>
         </div>
@@ -96,31 +103,33 @@ export function Community() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="flex flex-col justify-between p-6 rounded-2xl border border-white/5 bg-[#0F0F0F] hover:border-white/10 transition-all duration-200 group relative"
+              className="flex"
             >
-              <div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 mb-5 group-hover:scale-105 transition-transform duration-300">
-                  {block.icon}
-                </div>
-                <h4 className="text-lg font-bold text-white tracking-tight">
-                  {block.title}
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
-                  {block.description}
-                </p>
-              </div>
+              <Card className="flex flex-col justify-between w-full hover:border-white/10 transition-all duration-200 bg-card/40">
+                <CardHeader className="flex flex-col gap-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 mb-5 group-hover:scale-105 transition-transform duration-300">
+                    {block.icon}
+                  </div>
+                  <CardTitle className="text-lg font-bold text-white tracking-tight">{block.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                    {block.description}
+                  </p>
+                </CardContent>
 
-              <div className="mt-6 border-t border-white/5 pt-4">
-                <a
-                  href={block.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-500 hover:text-amber-400 transition-colors"
-                >
-                  Learn More
-                  <span>&rarr;</span>
-                </a>
-              </div>
+                <CardFooter className="border-t border-white/5 pt-4">
+                  <a
+                    href={block.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-500 hover:text-amber-400 transition-colors"
+                  >
+                    Learn More
+                    <span>&rarr;</span>
+                  </a>
+                </CardFooter>
+              </Card>
             </motion.div>
           ))}
         </div>

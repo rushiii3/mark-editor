@@ -1,6 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const testimonials = [
   {
@@ -19,7 +25,7 @@ const testimonials = [
   },
   {
     quote:
-      "I use Markups for all my technical design docs and resumes. The A4 page guide visualizer lets me layout multi-page documents perfectly without clipping elements. Clean HTML copies are a nice touch.",
+      "I use Manus for all my technical design docs and resumes. The A4 page guide visualizer lets me layout multi-page documents perfectly without clipping elements. Clean HTML copies are a nice touch.",
     author: "Marcus Chen",
     role: "Software Architect",
     avatar: "MC"
@@ -47,25 +53,26 @@ export function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="flex flex-col justify-between p-6 rounded-2xl border border-white/5 bg-[#0F0F0F] hover:border-white/10 transition-colors duration-250 relative group"
+              className="flex"
             >
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-500/0 via-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-amber-500/0 transition-all duration-300 opacity-60"></div>
-
-              <div className="text-sm text-slate-300 leading-relaxed italic relative z-10">
-                &ldquo;{t.quote}&rdquo;
-              </div>
-
-              <div className="flex items-center gap-3 mt-6 border-t border-white/5 pt-4 relative z-10">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10 text-amber-500 font-bold text-xs">
-                  {t.avatar}
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white tracking-tight">
-                    {t.author}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{t.role}</p>
-                </div>
-              </div>
+              <Card className="flex flex-col justify-between w-full hover:border-white/10 transition-colors duration-250 bg-card/40">
+                <CardContent className="text-sm text-slate-300 leading-relaxed italic pt-6">
+                  &ldquo;{t.quote}&rdquo;
+                </CardContent>
+                <CardFooter className="flex items-center gap-3 border-t border-white/5 pt-4">
+                  <Avatar className="size-9">
+                    <AvatarFallback className="bg-amber-500/10 text-amber-500 font-bold text-xs">
+                      {t.avatar}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <h4 className="text-sm font-bold text-white tracking-tight">
+                      {t.author}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{t.role}</p>
+                  </div>
+                </CardFooter>
+              </Card>
             </motion.div>
           ))}
         </div>

@@ -241,7 +241,7 @@ export const Toolbar = memo(function Toolbar({
             M
           </div>
           <div className="text-[2rem] font-semibold tracking-tight text-foreground">
-            Markups
+            Manus
           </div>
         </div>
 

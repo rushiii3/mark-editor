@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Manus
+
+[![MIT License](https://img.shields.io/badge/license-MIT-amber.svg)](https://github.com/rushiii3/mark-editor/blob/main/LICENSE)
+[![Open Source](https://img.shields.io/badge/open--source-yes-emerald.svg)](https://github.com/rushiii3/mark-editor)
+[![Works Offline](https://img.shields.io/badge/offline-ready-blue.svg)](https://github.com/rushiii3/mark-editor)
+[![Privacy First](https://img.shields.io/badge/privacy-secure-purple.svg)](https://github.com/rushiii3/mark-editor)
+
+**Manus** is a free, open-source, local-first markdown studio designed for developers. It features a sandboxed browser environment with Monaco core editing, slash command overlays, live preview, local image compression/galleries, A4 page guides, and native client-side PDF vector compilation.
+
+Write clean technical documents, format math equations, upload local assets, and export high-fidelity PDF guides completely offline.
+
+---
+
+## Key Features
+
+- **GFM Markdown Engine**: Compile GitHub-flavored markdown with full support for KaTeX math symbols, emojis, and custom containers like `:::callout[tip]` and `:::collapse[details]`.
+- **A4 PDF Page Guides**: Work with physical document constraints. Preview page boundaries and inject `::pagebreak` or HTML page-breaks to separate layout pages cleanly.
+- **Native PDF Vector Exports**: Generates lightweight, searchable, and selectable vector PDFs client-side using `@react-pdf/renderer` (replacing low-resolution canvas screenshots).
+- **IndexedDB Client Sandbox**: No servers, no tracking, and no telemetry. All markdown text files and media are stored locally in your browser's IndexedDB database sandbox.
+- **Local Image Gallery**: Upload and compress local images directly. They are saved as binary Blobs in IndexedDB and resolved instantly inside the editor using local object URLs.
+- **Monaco Core Editor**: Leverage VS Code's editor features—including autocomplete, multi-cursor, bracket matching, line wrapping, and customizable slash commands.
+- **Instant Auto-Save**: A debounced auto-save listener writes workspace documents to storage on every keystroke, preventing data loss.
+
+---
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router, Turbopack) & React 19
+- **State Management**: Zustand
+- **Local Database**: IndexedDB (using `idb` wrapper)
+- **Editor**: Monaco Editor (`@monaco-editor/react`)
+- **PDF Compilation**: `@react-pdf/renderer`
+- **Markdown Parsing**: `remark` & `rehype` plugins
+- **Components**: Shadcn UI (using `radix-mira` primitives)
+- **Styling**: Tailwind CSS v4
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Ensure you have [Node.js](https://nodejs.org) (v18+) and [pnpm](https://pnpm.io) installed on your device.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Local Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/rushiii3/mark-editor.git
+   cd mark-editor
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Install Dependencies**:
+   ```bash
+   pnpm install
+   ```
 
-## Learn More
+3. **Run Development Server**:
+   ```bash
+   pnpm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+4. **Lint and Type Check**:
+   ```bash
+   pnpm run lint
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Build for Production**:
+   ```bash
+   pnpm run build
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Since **Manus** is a client-first static React application, you can export the static bundles and deploy them to any CDN hosting platform (e.g. Vercel, Netlify, Cloudflare Pages, GitHub Pages) or host it on your own server.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Contributing
+
+We welcome contributions! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) to learn how to set up the workspace, understand the project architecture, and submit improvements.
+
+---
+
+## License
+
+MIT License &mdash; Copyright (c) 2026. See the [LICENSE](./LICENSE) file for details.
