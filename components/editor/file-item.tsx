@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, File01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ type FileItemProps = {
   onRename: (id: string, name: string) => void;
 };
 
-export function FileItem({
+export const FileItem = memo(function FileItem({
   file,
   active,
   onSelect,
@@ -83,4 +83,4 @@ export function FileItem({
       </button>
     </div>
   );
-}
+});

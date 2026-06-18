@@ -16,7 +16,7 @@ export function ImageGallery({ onInsert }: ImageGalleryProps) {
 
   useEffect(() => {
     loadImages();
-  }, []);
+  }, [loadImages]);
 
   async function handleDelete(id: string) {
     await removeImage(id);

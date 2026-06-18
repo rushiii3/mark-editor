@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 import {
   Card,
   CardContent,
@@ -27,7 +29,7 @@ const indentByLevel: Record<number, string> = {
   6: "ml-18"
 };
 
-export function TableOfContentsPanel({
+export const TableOfContentsPanel = memo(function TableOfContentsPanel({
   headings,
   activeHeadingId,
   onSelect
@@ -65,4 +67,4 @@ export function TableOfContentsPanel({
       </CardContent>
     </Card>
   );
-}
+});

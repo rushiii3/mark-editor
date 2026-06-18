@@ -21,7 +21,13 @@ const fontMono = Fira_Code({
 });
 export const metadata: Metadata = {
   title: "Mark Editor",
-  description: "Offline-first Markdown to PDF editor"
+  description: "Offline-first Markdown to PDF editor",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Manus | Mark Editor"
+  }
 };
 
 export default function RootLayout({
@@ -35,6 +41,9 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", "font-sans")}
       suppressHydrationWarning
     >
+      <head>
+        <meta name="apple-mobile-web-app-title" content="Manus" />
+      </head>
       <body
         className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased min-h-full`}
       >

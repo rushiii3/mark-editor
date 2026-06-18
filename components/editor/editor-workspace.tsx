@@ -1,43 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { OnMount } from "@monaco-editor/react";
-import type { editor, IRange, Position } from "monaco-editor";
+import { useCallback, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
-import {
-  applyBlockQuote,
-  applyBold,
-  applyCodeBlock,
-  applyHeading,
-  applyInlineCode,
-  applyItalic,
-  applyList,
-  applyOrderedList,
-  applyRedo,
-  applyStrikethrough,
-  applyToggle,
-  applyTaskList,
-  applyUndo,
-  applyWrap,
-  insertHorizontalLine,
-  insertImage,
-  insertLink,
-  insertSnippet,
-  insertTable,
-  applyCallout,
-  applyLineBreak
-} from "@/components/editor/editor-utils";
 import { EditorPanel } from "@/components/editor/editor-panel";
 import { PreviewPanel } from "@/components/editor/preview-panel";
 import { TableOfContentsPanel } from "@/components/editor/table-of-contents-panel";
 import { Toolbar } from "@/components/editor/toolbar";
-import type {
-  EditorViewMode,
-  SlashCommand,
-  SlashMenuState,
-  ToolbarAction
-} from "@/components/editor/types";
+import type { EditorViewMode, SlashCommand } from "@/components/editor/types";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -46,8 +16,10 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Sidebar } from "./sidebar";
 import { useMarkdownPreview } from "@/hooks/use-markdown-preview";
-import { useFileStore } from "@/store/file-store";
-import { getDocument, saveDocument } from "@/db/documents";
+import { useDocumentPersistence } from "@/hooks/use-document-persistence";
+import { useMonacoHandler } from "@/hooks/use-monaco-handler";
+import { useToolbarHandler } from "@/hooks/use-toolbar-handler";
+import { insertSnippet } from "@/components/editor/editor-utils";
 
 const starterMarkdown = `# Markdown PDF Studio
 
@@ -81,334 +53,54 @@ const slashCommands: SlashCommand[] = [
 ];
 
 export function EditorWorkspace() {
-  const [markdown, setMarkdown] = useState(starterMarkdown);
   const [viewMode, setViewMode] = useState<EditorViewMode>("split");
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
-  const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
-  const [slashMenuState, setSlashMenuState] = useState<SlashMenuState>({
-    open: false,
-    top: 0,
-    left: 0,
-    range: null
-  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { resolvedTheme, setTheme } = useTheme();
+  
   const previewRef = useRef<HTMLDivElement | null>(null);
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const editorContainerRef = useRef<HTMLElement | null>(null);
   const previewEnabled = viewMode !== "write";
+
+  // 1. Hook: Document state & IndexedDB auto-saving
+  const { markdown, setMarkdown } = useDocumentPersistence(starterMarkdown);
+
+  // 2. Hook: Monaco editor callbacks & cursor position state
+  const {
+    editorRef,
+    cursorPosition,
+    slashMenuState,
+    handleEditorMount,
+    closeSlashMenu
+  } = useMonacoHandler();
+
+  // 3. Hook: Live markdown compilation
   const { headings, html: previewHtml } = useMarkdownPreview(
     markdown,
     previewEnabled
   );
 
-  const activeFileId = useFileStore((s) => s.activeFileId);
-
-  const [isLoadingDocument, setIsLoadingDocument] = useState(false);
-
-  useEffect(() => {
-    if (!activeFileId) return;
-
-    const loadDocument = async () => {
-      setIsLoadingDocument(true);
-
-      try {
-        const document = await getDocument(activeFileId);
-
-        setMarkdown(document?.content ?? "");
-      } finally {
-        setIsLoadingDocument(false);
-      }
-    };
-
-    void loadDocument();
-  }, [activeFileId]);
-  useEffect(() => {
-    if (!activeFileId) return;
-
-    const timeout = setTimeout(async () => {
-      const existing = await getDocument(activeFileId);
-
-      await saveDocument({
-        id: activeFileId,
-        name: existing?.name ?? "Untitled",
-        content: markdown,
-        createdAt: existing?.createdAt ?? Date.now(),
-        updatedAt: Date.now()
-      });
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [markdown, activeFileId]);
-
-  const closeSlashMenu = useCallback(() => {
-    setSlashMenuState((current) =>
-      current.open ? { open: false, top: 0, left: 0, range: null } : current
-    );
-  }, []);
-
-  const getEditorContainer = useCallback(() => {
-    if (editorContainerRef.current) {
-      return editorContainerRef.current;
-    }
-
-    const editorDomNode = editorRef.current?.getDomNode();
-    if (editorDomNode) {
-      editorContainerRef.current = editorDomNode;
-      return editorDomNode;
-    }
-
-    return null;
-  }, []);
-
-  const openSlashMenu = useCallback(
-    (position: Position, range: IRange) => {
-      const editorInstance = editorRef.current;
-      const container = getEditorContainer();
-
-      if (!editorInstance || !container) {
-        return;
-      }
-
-      const visiblePosition =
-        editorInstance.getScrolledVisiblePosition(position);
-
-      if (!visiblePosition) {
-        return;
-      }
-
-      setSlashMenuState({
-        open: true,
-        top: visiblePosition.top + visiblePosition.height + 12,
-        left: Math.min(
-          visiblePosition.left + 12,
-          Math.max(16, container.clientWidth - 220)
-        ),
-        range
-      });
-    },
-    [getEditorContainer]
-  );
-
-  const handleEditorMount: OnMount = useCallback(
-    (editorInstance, monaco) => {
-      editorRef.current = editorInstance;
-      editorContainerRef.current = editorInstance.getDomNode();
-
-      editorInstance.onDidBlurEditorText(() => {
-        closeSlashMenu();
-      });
-
-      editorInstance.onKeyDown((event) => {
-        if (event.keyCode === monaco.KeyCode.Escape) {
-          closeSlashMenu();
-        }
-      });
-
-      editorInstance.onDidChangeCursorPosition(() => {
-        const currentPosition = editorInstance.getPosition();
-        if (currentPosition) {
-          setCursorPosition({
-            line: currentPosition.lineNumber,
-            column: currentPosition.column
-          });
-        }
-
-        setSlashMenuState((current) => {
-          if (!current.open) {
-            return current;
-          }
-
-          const position = editorInstance.getPosition();
-          const container = getEditorContainer();
-
-          if (!position || !container) {
-            return current;
-          }
-
-          const visiblePosition =
-            editorInstance.getScrolledVisiblePosition(position);
-
-          if (!visiblePosition) {
-            return current;
-          }
-
-          return {
-            ...current,
-            top: visiblePosition.top + visiblePosition.height + 12,
-            left: Math.min(
-              visiblePosition.left + 12,
-              Math.max(16, container.clientWidth - 220)
-            )
-          };
-        });
-      });
-
-      editorInstance.onDidChangeModelContent((event) => {
-        const change = event.changes.at(-1);
-
-        if (!change) {
-          return;
-        }
-
-        if (change.text === "/" && change.rangeLength === 0) {
-          const position = editorInstance.getPosition();
-          if (!position) {
-            return;
-          }
-
-          const range = new monaco.Range(
-            change.range.startLineNumber,
-            change.range.startColumn,
-            change.range.startLineNumber,
-            change.range.startColumn + 1
-          );
-
-          openSlashMenu(position, range);
-          return;
-        }
-
-        closeSlashMenu();
-      });
-    },
-    [closeSlashMenu, getEditorContainer, openSlashMenu]
-  );
-
+  // 4. Sidebar toggler callback
   const handleSidebar = useCallback(() => {
-    setSidebarOpen(!sidebarOpen);
-  }, [sidebarOpen]);
-  const handleToolbarAction = useCallback(
-    async (action: ToolbarAction) => {
-      const editorInstance = editorRef.current;
+    setSidebarOpen((prev) => !prev);
+  }, []);
 
-      if (action === "export-pdf") {
-        if (!previewRef.current) {
-          return;
-        }
+  // 5. Hook: Toolbar actions mapping & PDF exporter setup
+  const {
+    handleInsertImage,
+    handleTableInput,
+    handleLinkInput,
+    handleToolbarAction
+  } = useToolbarHandler({
+    editorRef,
+    onSidebarToggle: handleSidebar
+  });
 
-        const html2pdf = (await import("html2pdf.js")).default;
-        await html2pdf()
-          .set({
-            filename: "document.pdf",
-            margin: 10,
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              backgroundColor: "#ffffff"
-            },
-            jsPDF: {
-              unit: "mm",
-              format: "a4",
-              orientation: "portrait"
-            }
-          })
-          .from(previewRef.current)
-          .save();
+  // 6. Theme switcher callback
+  const handleToggleTheme = useCallback(() => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  }, [resolvedTheme, setTheme]);
 
-        return;
-      }
-
-      if (!editorInstance) {
-        return;
-      }
-
-      switch (action) {
-        case "undo":
-          applyUndo(editorInstance);
-          break;
-        case "redo":
-          applyRedo(editorInstance);
-          break;
-        case "h1":
-          applyHeading(editorInstance, 1);
-          break;
-        case "h2":
-          applyHeading(editorInstance, 2);
-          break;
-        case "h3":
-          applyHeading(editorInstance, 3);
-          break;
-        case "h4":
-          applyHeading(editorInstance, 4);
-          break;
-        case "h5":
-          applyHeading(editorInstance, 5);
-          break;
-        case "h6":
-          applyHeading(editorInstance, 6);
-          break;
-        case "bold":
-          applyBold(editorInstance);
-          break;
-        case "italic":
-          applyItalic(editorInstance);
-          break;
-        case "underline":
-          applyWrap(editorInstance, "<u>", "</u>");
-          break;
-        case "strikethrough":
-          applyStrikethrough(editorInstance);
-          break;
-        case "hr":
-          insertHorizontalLine(editorInstance);
-          break;
-        case "code":
-          applyInlineCode(editorInstance);
-          break;
-        case "code-block":
-          applyCodeBlock(editorInstance);
-          break;
-        case "toggle":
-          applyToggle(editorInstance);
-          break;
-        case "checkbox":
-          applyTaskList(editorInstance);
-          break;
-        case "unordered-list":
-          applyList(editorInstance);
-          break;
-        case "ordered-list":
-          applyOrderedList(editorInstance);
-          break;
-        case "quote":
-          applyBlockQuote(editorInstance);
-          break;
-        case "note":
-          applyCallout(editorInstance, "note");
-          break;
-        case "tip":
-          applyCallout(editorInstance, "tip");
-          break;
-        case "important":
-          applyCallout(editorInstance, "important");
-          break;
-        case "warning":
-          applyCallout(editorInstance, "warning");
-          break;
-        case "caution":
-          applyCallout(editorInstance, "caution");
-          break;
-        case "info":
-          applyCallout(editorInstance, "info");
-          break;
-        case "success":
-          applyCallout(editorInstance, "success");
-          break;
-        case "error":
-          applyCallout(editorInstance, "error");
-          break;
-        case "lb":
-          applyLineBreak(editorInstance);
-          break;
-        case "file":
-          handleSidebar();
-        default:
-          break;
-      }
-    },
-    [handleSidebar]
-  );
-
+  // 7. Table of contents heading scroll handler
   const handleSelectHeading = useCallback((id: string) => {
     const target = previewRef.current?.querySelector<HTMLElement>(
       `#${CSS.escape(id)}`
@@ -420,10 +112,7 @@ export function EditorWorkspace() {
     }
   }, []);
 
-  const handleToggleTheme = useCallback(() => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark");
-  }, [resolvedTheme, setTheme]);
-
+  // 8. Editor slash menu command trigger callback
   const handleSlashCommand = useCallback(
     (id: SlashCommand["id"]) => {
       const editorInstance = editorRef.current;
@@ -453,73 +142,15 @@ export function EditorWorkspace() {
 
       closeSlashMenu();
     },
-    [closeSlashMenu, slashMenuState.range]
+    [closeSlashMenu, editorRef, slashMenuState.range]
   );
 
   const words = markdown.trim() ? markdown.trim().split(/\s+/).length : 0;
   const chars = markdown.length;
   const readingMinutes = Math.max(1, Math.ceil(words / 200));
 
-  const handleInsertImage = useCallback((url: string, alt: string) => {
-    const editorInstance = editorRef.current;
-    if (!editorInstance) {
-      return;
-    }
-    const cmd = `![${alt}](${url})`;
-
-    insertImage(editorInstance, cmd);
-  }, []);
-
-  const handleTableInput = useCallback((rows: number, columns: number) => {
-    const editorInstance = editorRef.current;
-
-    if (!editorInstance) {
-      return;
-    }
-
-    const headers = Array.from(
-      { length: columns },
-      (_, index) => `Column ${index + 1}`
-    );
-
-    const separator = Array.from({ length: columns }, () => "--------");
-
-    const bodyRows = Array.from(
-      { length: rows },
-      (_, rowIndex) =>
-        `| ${Array.from(
-          { length: columns },
-          (_, colIndex) => `Cell ${rowIndex + 1}-${colIndex + 1}`
-        ).join(" | ")} |`
-    );
-
-    const table = [
-      "",
-      `| ${headers.join(" | ")} |`,
-      `| ${separator.join(" | ")} |`,
-      ...bodyRows,
-      ""
-    ].join("\n");
-
-    insertTable(editorInstance, table);
-  }, []);
-
-  const handleLinkInput = useCallback((url: string, altText: string) => {
-    const editorInstance = editorRef.current;
-
-    if (!editorInstance) {
-      return;
-    }
-
-    const cmd = `[${altText}](${url})`;
-
-    insertLink(editorInstance, cmd);
-  }, []);
-
   const contentPane = (
     <div className="h-[calc(100vh-150px)]">
-      {/* Sidebar */}
-
       {viewMode === "write" ? (
         <EditorPanel
           markdown={markdown}
@@ -531,7 +162,6 @@ export function EditorWorkspace() {
           onCloseSlashMenu={closeSlashMenu}
         />
       ) : viewMode === "preview" ? (
-        // <div className="h-[calc(100vh-30rem)]">
         <ResizablePanelGroup orientation="horizontal">
           <ResizablePanel defaultSize="78%">
             <PreviewPanel html={previewHtml} previewRef={previewRef} />

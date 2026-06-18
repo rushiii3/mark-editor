@@ -55,6 +55,8 @@ export function EditorPanel({
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [onCloseSlashMenu, slashMenuState.open]);
 
+  console.log(theme);
+
   return (
     <section
       ref={containerRef}

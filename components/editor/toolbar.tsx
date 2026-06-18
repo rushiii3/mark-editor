@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, memo } from "react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   ArrowTurnBackwardIcon,
@@ -197,7 +197,7 @@ function toggleFullScreen() {
   void document.exitFullscreen();
 }
 
-export function Toolbar({
+export const Toolbar = memo(function Toolbar({
   onAction,
   onToggleTheme,
   onViewModeChange,
@@ -252,8 +252,8 @@ export function Toolbar({
             if (
               value === "write" ||
               value === "split" ||
-              value === "preview" ||
-              value === "pdf"
+              value === "preview"
+              // value === "pdf"
             ) {
               onViewModeChange(value);
             }
@@ -465,7 +465,7 @@ export function Toolbar({
               type="button"
               size="lg"
               variant={"ghost"}
-              // onClick={() => onAction("export-pdf")}
+              onClick={() => onAction("export-pdf")}
             >
               <HugeiconsIcon icon={HistoryFreeIcons} size={16} />
               History
@@ -485,4 +485,4 @@ export function Toolbar({
       </div>
     </header>
   );
-}
+});

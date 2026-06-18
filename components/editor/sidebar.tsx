@@ -7,9 +7,9 @@ import { Plus } from "@hugeicons/core-free-icons";
 
 import { FileItem } from "./file-item";
 import { useFileStore } from "@/store/file-store";
-import { useEffect } from "react";
+import { useEffect, memo } from "react";
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
   const files = useFileStore((s) => s.files);
   const activeFileId = useFileStore((s) => s.activeFileId);
 
@@ -51,4 +51,4 @@ export function Sidebar() {
       </ScrollArea>
     </aside>
   );
-}
+});

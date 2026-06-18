@@ -27,13 +27,13 @@ export async function imageToWebpBlob(
     canvas.toBlob(
       (blob) => {
         if (!blob) {
-          reject(new Error("Failed to create WebP blob"));
+          reject(new Error("Failed to create jpeg blob"));
           return;
         }
 
         resolve(blob);
       },
-      "image/webp",
+      "image/jpeg",
       quality
     );
   });
