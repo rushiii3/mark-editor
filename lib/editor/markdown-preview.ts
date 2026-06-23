@@ -218,7 +218,7 @@ export async function processMarkdownPreview(
 
   const result = extractHeadings(html);
 
-  previewCache.set(markdown, result);
+  previewCache.set(cacheKey, result);
 
   if (previewCache.size > MAX_CACHE_ENTRIES) {
     const oldestKey = previewCache.keys().next().value;

@@ -74,6 +74,7 @@ import { TableForm } from "./forms/table-form";
 import { ImageForm } from "./forms/image-form";
 import { ImageGallery } from "./image-gallery";
 import { useImageStore } from "@/store/imageStore";
+import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
@@ -233,6 +234,10 @@ export const Toolbar = memo(function Toolbar({
   const images = useImageStore((state) => state.images);
   const clearImage = useImageStore((state) => state.clearImage);
 
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isDrawer = isMobile || isTablet;
+
   return (
     <header className="border-b bg-background">
       <div className="flex min-h-15 items-center gap-3 px-4">
@@ -265,9 +270,13 @@ export const Toolbar = memo(function Toolbar({
           <ToggleGroupItem value="write" size="lg">
             Write
           </ToggleGroupItem>
-          <ToggleGroupItem value="split" size="lg">
-            Split
-          </ToggleGroupItem>
+
+          {!isMobile && (
+            <ToggleGroupItem value="split" size="lg">
+              Split
+            </ToggleGroupItem>
+          )}
+
           <ToggleGroupItem value="preview" size="lg">
             Preview
           </ToggleGroupItem>
@@ -303,6 +312,35 @@ export const Toolbar = memo(function Toolbar({
             Fullscreen
           </Button>
         </div>
+
+        {/* Mobile/Tablet Menu */}
+        <div className="ml-auto flex items-center gap-1 lg:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl">
+                <HugeiconsIcon icon={Settings05Icon} size={18} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onToggleTheme} className="gap-2">
+                <HugeiconsIcon icon={Sun01Icon} size={16} />
+                <span>Toggle Theme</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2">
+                <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
+                <span>Help</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2">
+                <HugeiconsIcon icon={Settings05Icon} size={16} />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={toggleFullScreen} className="gap-2">
+                <HugeiconsIcon icon={FullScreenIcon} size={16} />
+                <span>Fullscreen</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <Separator />
@@ -317,6 +355,19 @@ export const Toolbar = memo(function Toolbar({
             }}
             onAction={onAction}
           />
+          {isDrawer && (
+            <>
+              <Separator orientation="vertical" className="mx-1.5 h-6" />
+              <IconButton
+                action={{
+                  action: "toc",
+                  icon: LeftToRightListBulletIcon,
+                  label: "Table of Contents"
+                }}
+                onAction={onAction}
+              />
+            </>
+          )}
           <Separator orientation="vertical" className="mx-1.5 h-6" />
           {HISTORY_ACTIONS.map((action) => (
             <IconButton

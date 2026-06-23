@@ -207,6 +207,64 @@ async function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
+export async function webpToPng(url: string): Promise<string> {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return url;
+  }
+  const img = new window.Image(); // ✅ Native browser Image
+  img.crossOrigin = "anonymous";
+  img.decoding = "async";
+
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Failed to get canvas context"));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0);
+
+      resolve(canvas.toDataURL("image/png"));
+    };
+
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+
+    img.src = url;
+  });
+}
+
+function isWebpUrl(url: string): boolean {
+  if (!url) return false;
+  const normalized = url.toLowerCase();
+  if (normalized.startsWith("data:image/webp")) {
+    return true;
+  }
+  const pathPart = url.split("?")[0].split("#")[0];
+  return pathPart.toLowerCase().endsWith(".webp");
+}
+
+async function convertWebpImagesToPng(node: AstNode) {
+  if (node.type === "image" && node.url && isWebpUrl(node.url)) {
+    try {
+      const pngUrl = await webpToPng(node.url);
+      node.url = pngUrl;
+      console.log("Converted webp image to png for PDF:", node.url.substring(0, 50));
+    } catch (error) {
+      console.error("Failed to convert webp image to png for PDF:", node.url, error);
+      // Keep original url as fallback
+    }
+  }
+
+  if (node.children) {
+    await Promise.all(node.children.map(convertWebpImagesToPng));
+  }
+}
+
 async function resolveAstLocalImages(node: AstNode) {
   if (
     node.type === "image" &&
@@ -387,6 +445,7 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
       );
     case "image":
       console.log(node.url);
+
       return (
         <View
           key={index}
@@ -558,6 +617,9 @@ export async function generateMarkdownPdfBlob(markdown: string): Promise<Blob> {
 
   // Resolve local image Blobs asynchronously from IndexedDB before rendering
   await resolveAstLocalImages(ast);
+
+  // Convert WebP images to PNG format for react-pdf compatibility
+  await convertWebpImagesToPng(ast);
 
   const { pdf } = await import("@react-pdf/renderer");
   const resolvedPdf = await pdf(<MarkdownPdfDocument ast={ast} />).toBlob();

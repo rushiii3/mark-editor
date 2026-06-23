@@ -27,11 +27,13 @@ import {
 type UseToolbarHandlerProps = {
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>;
   onSidebarToggle: () => void;
+  onTocToggle?: () => void;
 };
 
 export function useToolbarHandler({
   editorRef,
-  onSidebarToggle
+  onSidebarToggle,
+  onTocToggle
 }: UseToolbarHandlerProps) {
   const handleInsertImage = useCallback(
     (url: string, alt: string) => {
@@ -216,6 +218,9 @@ export function useToolbarHandler({
           break;
         case "file":
           onSidebarToggle();
+          break;
+        case "toc":
+          onTocToggle?.();
           break;
         default:
           break;

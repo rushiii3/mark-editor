@@ -32,7 +32,8 @@ export type ToolbarAction =
   | "success"
   | "error"
   | "lb"
-  | "file";
+  | "file"
+  | "toc";
 export type EditorViewMode = "write" | "split" | "preview" | "pdf";
 
 export type SlashCommandId = "h1" | "h2" | "bold" | "page-break";

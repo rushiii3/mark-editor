@@ -1,12 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
+import dynamic from "next/dynamic";
 
-import { EditorPanel } from "@/components/editor/editor-panel";
-import { PreviewPanel } from "@/components/editor/preview-panel";
-import { TableOfContentsPanel } from "@/components/editor/table-of-contents-panel";
-import { Toolbar } from "@/components/editor/toolbar";
 import type { EditorViewMode, SlashCommand } from "@/components/editor/types";
 import {
   ResizableHandle,
@@ -14,12 +11,39 @@ import {
   ResizablePanelGroup
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
-import { Sidebar } from "./sidebar";
 import { useMarkdownPreview } from "@/hooks/use-markdown-preview";
 import { useDocumentPersistence } from "@/hooks/use-document-persistence";
 import { useMonacoHandler } from "@/hooks/use-monaco-handler";
 import { useToolbarHandler } from "@/hooks/use-toolbar-handler";
 import { insertSnippet } from "@/components/editor/editor-utils";
+import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useFileStore } from "@/store/file-store";
+
+const EditorPanel = dynamic(
+  () => import("@/components/editor/editor-panel").then((mod) => mod.EditorPanel),
+  { ssr: false, loading: () => <div className="p-4 text-muted-foreground text-xs">Loading Editor...</div> }
+);
+
+const PreviewPanel = dynamic(
+  () => import("@/components/editor/preview-panel").then((mod) => mod.PreviewPanel),
+  { ssr: false, loading: () => <div className="p-4 text-muted-foreground text-xs">Loading Preview...</div> }
+);
+
+const TableOfContentsPanel = dynamic(
+  () => import("@/components/editor/table-of-contents-panel").then((mod) => mod.TableOfContentsPanel),
+  { ssr: false }
+);
+
+const Toolbar = dynamic(
+  () => import("@/components/editor/toolbar").then((mod) => mod.Toolbar),
+  { ssr: false }
+);
+
+const Sidebar = dynamic(
+  () => import("./sidebar").then((mod) => mod.Sidebar),
+  { ssr: false }
+);
 
 const starterMarkdown = `# Markdown PDF Studio
 
@@ -53,11 +77,40 @@ const slashCommands: SlashCommand[] = [
 ];
 
 export function EditorWorkspace() {
-  const [viewMode, setViewMode] = useState<EditorViewMode>("split");
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const [prevIsMobile, setPrevIsMobile] = useState(isMobile);
+  const [prevIsTablet, setPrevIsTablet] = useState(isTablet);
+
+  const [viewMode, setViewMode] = useState<EditorViewMode>(
+    isMobile ? "write" : "split"
+  );
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile && !isTablet);
+  const [tocOpen, setTocOpen] = useState(false);
+
+  if (isMobile !== prevIsMobile || isTablet !== prevIsTablet) {
+    setPrevIsMobile(isMobile);
+    setPrevIsTablet(isTablet);
+    setViewMode(isMobile ? "write" : "split");
+    setSidebarOpen(!isMobile && !isTablet);
+    setTocOpen(false);
+  }
+
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { resolvedTheme, setTheme } = useTheme();
   
+  const activeFileId = useFileStore((s) => s.activeFileId);
+  const [prevActiveFileId, setPrevActiveFileId] = useState(activeFileId);
+
+  const isDrawer = isMobile || isTablet;
+
+  if (activeFileId !== prevActiveFileId) {
+    setPrevActiveFileId(activeFileId);
+    if (isDrawer) {
+      setSidebarOpen(false);
+    }
+  }
+
   const previewRef = useRef<HTMLDivElement | null>(null);
   const previewEnabled = viewMode !== "write";
 
@@ -84,6 +137,10 @@ export function EditorWorkspace() {
     setSidebarOpen((prev) => !prev);
   }, []);
 
+  const handleTocToggle = useCallback(() => {
+    setTocOpen((prev) => !prev);
+  }, []);
+
   // 5. Hook: Toolbar actions mapping & PDF exporter setup
   const {
     handleInsertImage,
@@ -92,7 +149,8 @@ export function EditorWorkspace() {
     handleToolbarAction
   } = useToolbarHandler({
     editorRef,
-    onSidebarToggle: handleSidebar
+    onSidebarToggle: handleSidebar,
+    onTocToggle: handleTocToggle
   });
 
   // 6. Theme switcher callback
@@ -109,8 +167,11 @@ export function EditorWorkspace() {
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
       setActiveHeadingId(id);
+      if (isDrawer) {
+        setTocOpen(false);
+      }
     }
-  }, []);
+  }, [isDrawer]);
 
   // 8. Editor slash menu command trigger callback
   const handleSlashCommand = useCallback(
@@ -149,6 +210,10 @@ export function EditorWorkspace() {
   const chars = markdown.length;
   const readingMinutes = Math.max(1, Math.ceil(words / 200));
 
+  // const isDrawer = isMobile || isTablet;
+  const showSidebar = !isDrawer && sidebarOpen;
+  const showTOC = !isMobile && !isTablet;
+
   const contentPane = (
     <div className="h-[calc(100vh-150px)]">
       {viewMode === "write" ? (
@@ -162,28 +227,35 @@ export function EditorWorkspace() {
           onCloseSlashMenu={closeSlashMenu}
         />
       ) : viewMode === "preview" ? (
-        <ResizablePanelGroup orientation="horizontal">
-          <ResizablePanel defaultSize="78%">
-            <PreviewPanel html={previewHtml} previewRef={previewRef} />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize="22%" minSize="18%">
-            <TableOfContentsPanel
-              headings={headings}
-              activeHeadingId={activeHeadingId}
-              onSelect={handleSelectHeading}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        showTOC ? (
+          <ResizablePanelGroup orientation="horizontal">
+            <ResizablePanel defaultSize="78%">
+              <PreviewPanel html={previewHtml} previewRef={previewRef} />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize="22%" minSize="18%">
+              <TableOfContentsPanel
+                headings={headings}
+                activeHeadingId={activeHeadingId}
+                onSelect={handleSelectHeading}
+              />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        ) : (
+          <PreviewPanel html={previewHtml} previewRef={previewRef} />
+        )
       ) : (
         <ResizablePanelGroup orientation="horizontal">
-          {sidebarOpen && (
+          {showSidebar && (
             <ResizablePanel defaultSize="15%">
               <Sidebar />
             </ResizablePanel>
           )}
 
-          <ResizablePanel defaultSize="50%" minSize="30%">
+          <ResizablePanel
+            defaultSize={showSidebar ? "45%" : "50%"}
+            minSize="30%"
+          >
             <EditorPanel
               markdown={markdown}
               onChange={setMarkdown}
@@ -195,17 +267,21 @@ export function EditorWorkspace() {
             />
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize="37%" minSize="28%">
+          <ResizablePanel defaultSize={showTOC ? "37%" : "50%"} minSize="28%">
             <PreviewPanel html={previewHtml} previewRef={previewRef} />
           </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize="13%">
-            <TableOfContentsPanel
-              headings={headings}
-              activeHeadingId={activeHeadingId}
-              onSelect={handleSelectHeading}
-            />
-          </ResizablePanel>
+          {showTOC && (
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize="13%">
+                <TableOfContentsPanel
+                  headings={headings}
+                  activeHeadingId={activeHeadingId}
+                  onSelect={handleSelectHeading}
+                />
+              </ResizablePanel>
+            </>
+          )}
         </ResizablePanelGroup>
       )}
     </div>
@@ -224,6 +300,35 @@ export function EditorWorkspace() {
       />
 
       {contentPane}
+
+      {isDrawer && (
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-80 max-w-[85vw] border-r">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
+      )}
+
+      {isDrawer && (
+        <Sheet open={tocOpen} onOpenChange={setTocOpen}>
+          <SheetContent side="right" className="p-0 w-80 max-w-[85vw] border-l">
+            <div className="flex h-full flex-col bg-card">
+              <div className="border-b px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Table of Contents
+                </p>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2">
+                <TableOfContentsPanel
+                  headings={headings}
+                  activeHeadingId={activeHeadingId}
+                  onSelect={handleSelectHeading}
+                />
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
 
       <Separator />
 
