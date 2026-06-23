@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Outfit, Merriweather, Fira_Code } from "next/font/google";
-import "katex/dist/katex.min.css";
+
 const fontSans = Outfit({
   subsets: ["latin"],
   variable: "--font-sans"
