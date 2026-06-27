@@ -36,6 +36,5 @@ export async function resolveLocalImages(html: string) {
       img.setAttribute("src", url);
     })
   );
-
   return document.body.innerHTML;
 }

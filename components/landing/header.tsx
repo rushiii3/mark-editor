@@ -62,18 +62,18 @@ export function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="rounded-full border border-white/10 bg-white/5 px-4 text-xs font-semibold text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-200"
-            >
+            <Button asChild variant="ghost" size="sm" className="">
               <a
                 href="https://github.com/rushiii3/mark-editor"
                 target="_blank"
                 rel="noreferrer"
               >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" data-icon="inline-start">
+                <svg
+                  className="h-4 w-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  data-icon="inline-start"
+                >
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
@@ -81,7 +81,10 @@ export function Header() {
                   />
                 </svg>
                 Star
-                <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[9px] bg-white/10 text-white border-transparent">
+                <Badge
+                  variant="secondary"
+                  // className="ml-1 h-4 px-1.5 text-[9px] bg-white/10 text-white border-transparent"
+                >
                   1.2k
                 </Badge>
               </a>
@@ -90,7 +93,7 @@ export function Header() {
               <AnimatedThemeToggler
                 theme={resolvedTheme as "light" | "dark"}
                 onThemeChange={(newTheme) => setTheme(newTheme)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-200"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5  hover:bg-white/10 hover:text-white transition-all duration-200"
               />
             ) : (
               <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5" />
@@ -98,7 +101,7 @@ export function Header() {
             <Button
               asChild
               size="lg"
-              className="rounded-xl font-semibold shadow-lg shadow-primary/20 hover:-translate-y-px transition-all"
+              // className="rounded-xl font-semibold shadow-lg shadow-primary/20 hover:-translate-y-px transition-all"
             >
               <Link href="/editor">Open Editor</Link>
             </Button>
@@ -180,9 +183,9 @@ export function Header() {
             >
               FAQ
             </a>
-            
+
             <Separator className="bg-white/10" />
-            
+
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between py-1.5 text-slate-300">
                 <span className="text-sm font-medium">Theme</span>

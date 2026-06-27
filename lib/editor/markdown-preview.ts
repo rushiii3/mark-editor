@@ -56,7 +56,8 @@ function sanitizeHtml(html: string) {
     ALLOW_DATA_ATTR: false,
     FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
     FORBID_TAGS: ["embed", "form", "iframe", "object", "script"],
-    USE_PROFILES: { html: true }
+    USE_PROFILES: { html: true },
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|data|blob):|[^&#:\/?#]*(?:[\/?#]|$))/i
   });
 }
 
@@ -183,8 +184,9 @@ export async function processMarkdownPreview(
   if (features.hasMermaid) {
     const { default: rehypeMermaid } = await import("rehype-mermaid");
 
+    console.log("Im mermaid");
     processor.use(rehypeMermaid, {
-      colorScheme: "light",
+      colorScheme: "dark",
       strategy: "img-png"
     });
   }
@@ -213,8 +215,13 @@ export async function processMarkdownPreview(
   const rawHtml = String(file);
 
   const resolvedHtml = await resolveLocalImages(rawHtml);
+  // console.log("Resolved Html : ", resolvedHtml);
 
   const html = features.hasRawHtml ? sanitizeHtml(resolvedHtml) : resolvedHtml;
+
+  // const html = resolvedHtml;
+
+  // console.log("Sanitized Html : ", html);
 
   const result = extractHeadings(html);
 

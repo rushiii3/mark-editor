@@ -19,13 +19,15 @@ const previewTabs = [
         </div>
         <div className="space-y-1.5">
           <div>
-            <span className="text-slate-600 select-none mr-3">1</span># Project README
+            <span className="text-slate-600 select-none mr-3">1</span># Project
+            README
           </div>
           <div>
             <span className="text-slate-600 select-none mr-3">2</span>
           </div>
           <div>
-            <span className="text-slate-600 select-none mr-3">3</span>This is a local-first editor with advanced formatting.
+            <span className="text-slate-600 select-none mr-3">3</span>This is a
+            local-first editor with advanced formatting.
           </div>
           <div>
             <span className="text-slate-600 select-none mr-3">4</span>
@@ -109,7 +111,8 @@ const previewTabs = [
             Local Database Sandbox
           </h4>
           <p className="text-[11px] text-slate-500 mt-1 max-w-[200px] leading-relaxed">
-            All files are stored in your browser&apos;s client IndexedDB store. No servers involved.
+            All files are stored in your browser&apos;s client IndexedDB store.
+            No servers involved.
           </p>
         </div>
       </div>
@@ -157,10 +160,14 @@ export function ProductPreview() {
   return (
     <section className="relative py-20 md:py-28 overflow-hidden border-t border-white/5">
       <div className="mx-auto max-w-7xl px-6 md:px-8">
-        <Tabs defaultValue="editor" orientation="vertical" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <Tabs
+          defaultValue="editor"
+          orientation="vertical"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center"
+        >
           {/* Left copy & selector */}
           <div className="lg:col-span-5 space-y-6">
-            <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+            <span className="text-xs font-semibold uppercase tracking-widest text-">
               Interactive Preview
             </span>
             <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
@@ -201,7 +208,11 @@ export function ProductPreview() {
 
               <div className="h-[calc(100%-27px)] overflow-hidden">
                 {previewTabs.map((tab) => (
-                  <TabsContent key={tab.id} value={tab.id} className="h-full mt-0">
+                  <TabsContent
+                    key={tab.id}
+                    value={tab.id}
+                    className="h-full mt-0"
+                  >
                     {tab.mockup}
                   </TabsContent>
                 ))}

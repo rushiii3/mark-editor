@@ -12,39 +12,79 @@ import {
 import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkDirective from "remark-directive";
+import { emojify } from "node-emoji";
 import { getImageBlob } from "@/db/image";
+import { mermaidToPng } from "@/lib/mermaid";
 
 // Register Google Font Inter
-Font.register({
-  family: "Inter",
-  fonts: [
-    {
-      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf",
-      fontWeight: "normal",
-      fontStyle: "normal"
-    },
-    {
-      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf",
-      fontWeight: "bold",
-      fontStyle: "normal"
-    },
-    {
-      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-italic.ttf",
-      fontWeight: "normal",
-      fontStyle: "italic"
-    },
-    {
-      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-italic.ttf",
-      fontWeight: "bold",
-      fontStyle: "italic"
-    }
-  ]
+// Font.register({
+//   family: "Inter",
+//   fonts: [
+//     {
+//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf",
+//       fontWeight: "normal",
+//       fontStyle: "normal"
+//     },
+//     {
+//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf",
+//       fontWeight: "bold",
+//       fontStyle: "normal"
+//     },
+//     {
+//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-italic.ttf",
+//       fontWeight: "normal",
+//       fontStyle: "italic"
+//     },
+//     {
+//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-italic.ttf",
+//       fontWeight: "bold",
+//       fontStyle: "italic"
+//     }
+//   ]
+// });
+
+Font.registerEmojiSource({
+  format: "png",
+  url: "/emoji/"
 });
+
+async function resolveEmoji(node: AstNode) {
+  if (typeof node.value === "string") {
+    console.log(emojify(node.value));
+    node.value = emojify(node.value);
+  }
+  if (node.children) {
+    node.children.forEach(resolveEmoji);
+  }
+}
+
+async function renderMermaidDiagrams(node: AstNode) {
+  if (node.type === "code" && node.lang === "mermaid" && node.value) {
+    try {
+      const png = await mermaidToPng(node.value);
+
+      node.type = "image";
+      node.url = png;
+      node.alt = "Mermaid Diagram";
+
+      delete node.value;
+      delete node.lang;
+    } catch (err) {
+      console.error("Mermaid render failed", err);
+    }
+  }
+
+  if (node.children) {
+    await Promise.all(node.children.map(renderMermaidDiagrams));
+  }
+}
 
 interface AstNode {
   type: string;
   value?: string;
   url?: string;
+  caption?: string;
+  lang?: string;
   alt?: string;
   depth?: 1 | 2 | 3 | 4 | 5 | 6;
   ordered?: boolean;
@@ -63,7 +103,7 @@ const styles = StyleSheet.create({
     paddingBottom: "22mm",
     paddingLeft: "18mm",
     paddingRight: "18mm",
-    fontFamily: "Inter",
+    // fontFamily: "Inter",
     fontSize: 10,
     lineHeight: 1.55,
     color: "#1F2937"
@@ -253,9 +293,16 @@ async function convertWebpImagesToPng(node: AstNode) {
     try {
       const pngUrl = await webpToPng(node.url);
       node.url = pngUrl;
-      console.log("Converted webp image to png for PDF:", node.url.substring(0, 50));
+      console.log(
+        "Converted webp image to png for PDF:",
+        node.url.substring(0, 50)
+      );
     } catch (error) {
-      console.error("Failed to convert webp image to png for PDF:", node.url, error);
+      console.error(
+        "Failed to convert webp image to png for PDF:",
+        node.url,
+        error
+      );
       // Keep original url as fallback
     }
   }
@@ -444,7 +491,7 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
         </View>
       );
     case "image":
-      console.log(node.url);
+      // console.log(node.url);
 
       return (
         <View
@@ -611,7 +658,10 @@ export function MarkdownPdfDocument({ ast }: MarkdownPdfDocumentProps) {
 }
 
 export async function generateMarkdownPdfBlob(markdown: string): Promise<Blob> {
-  const processor = remark().use(remarkGfm).use(remarkDirective);
+  const processor = remark()
+    .use(remarkGfm)
+    // .use(remarkEmoji)
+    .use(remarkDirective);
   const ast = processor.parse(markdown) as unknown as AstNode;
   console.log(ast);
 
@@ -620,6 +670,10 @@ export async function generateMarkdownPdfBlob(markdown: string): Promise<Blob> {
 
   // Convert WebP images to PNG format for react-pdf compatibility
   await convertWebpImagesToPng(ast);
+
+  await renderMermaidDiagrams(ast);
+
+  await resolveEmoji(ast);
 
   const { pdf } = await import("@react-pdf/renderer");
   const resolvedPdf = await pdf(<MarkdownPdfDocument ast={ast} />).toBlob();

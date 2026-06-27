@@ -9,9 +9,6 @@ export function WhyOpenSource() {
       id="why-open-source"
       className="relative py-20 md:py-28 overflow-hidden"
     >
-      {/* Background radial highlight */}
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none select-none"></div>
-
       <div className="mx-auto max-w-7xl px-6 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Copy Panel */}
@@ -21,25 +18,25 @@ export function WhyOpenSource() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary">
               MIT Licensed
             </span>
-            <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-3 leading-tight">
+            <h3 className="text-3xl sm:text-4xl font-bold tracking-tight  mt-3 leading-tight">
               Why Open Source & Local-First?
             </h3>
             <p className="text-slate-400 mt-6 leading-relaxed">
               We believe developers deserve tools that respect their
-              independence. Manus runs entirely in your browser’s sandbox,
-              using your local storage as a database.
+              independence. Manus runs entirely in your browser’s sandbox, using
+              your local storage as a database.
             </p>
 
             <div className="mt-8 space-y-6">
               <div className="flex gap-4">
-                <div className="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                <div className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
                   ✓
                 </div>
                 <div>
-                  <h4 className="text-base font-semibold text-white">
+                  <h4 className="text-base font-semibold ">
                     Full Privacy Audit
                   </h4>
                   <p className="text-sm text-slate-400 mt-1">
@@ -54,7 +51,7 @@ export function WhyOpenSource() {
                   ✓
                 </div>
                 <div>
-                  <h4 className="text-base font-semibold text-white">
+                  <h4 className="text-base font-semibold ">
                     No Vendor Lock-in
                   </h4>
                   <p className="text-sm text-slate-400 mt-1">
@@ -70,7 +67,7 @@ export function WhyOpenSource() {
                   ✓
                 </div>
                 <div>
-                  <h4 className="text-base font-semibold text-white">
+                  <h4 className="text-base font-semibold ">
                     Community Driven Development
                   </h4>
                   <p className="text-sm text-slate-400 mt-1">
@@ -122,8 +119,11 @@ export function WhyOpenSource() {
                 </div>
                 <div className="pl-8">
                   store.createIndex(
-                  <span className="text-amber-500">&quot;by-createdAt&quot;</span>
-                  , <span className="text-amber-500">&quot;createdAt&quot;</span>)
+                  <span className="text-amber-500">
+                    &quot;by-createdAt&quot;
+                  </span>
+                  ,{" "}
+                  <span className="text-amber-500">&quot;createdAt&quot;</span>)
                 </div>
                 <div className="pl-4">&#125;)</div>
 

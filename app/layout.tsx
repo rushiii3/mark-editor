@@ -3,22 +3,22 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Outfit, Merriweather, Fira_Code } from "next/font/google";
+// import { Outfit, Merriweather, Fira_Code } from "next/font/google";
 
-const fontSans = Outfit({
-  subsets: ["latin"],
-  variable: "--font-sans"
-});
+// const fontSans = Outfit({
+//   subsets: ["latin"],
+//   variable: "--font-sans"
+// });
 
-const fontSerif = Merriweather({
-  subsets: ["latin"],
-  variable: "--font-serif"
-});
+// const fontSerif = Merriweather({
+//   subsets: ["latin"],
+//   variable: "--font-serif"
+// });
 
-const fontMono = Fira_Code({
-  subsets: ["latin"],
-  variable: "--font-mono"
-});
+// const fontMono = Fira_Code({
+//   subsets: ["latin"],
+//   variable: "--font-mono"
+// });
 export const metadata: Metadata = {
   title: "Mark Editor",
   description: "Offline-first Markdown to PDF editor",
@@ -45,7 +45,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Manus" />
       </head>
       <body
-        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased min-h-full`}
+      // className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased min-h-full`}
       >
         <ThemeProvider
           attribute="class"
