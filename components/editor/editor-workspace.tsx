@@ -22,17 +22,34 @@ import { useFileStore } from "@/store/file-store";
 import { useSettingsStore } from "@/store/settings-store";
 
 const EditorPanel = dynamic(
-  () => import("@/components/editor/editor-panel").then((mod) => mod.EditorPanel),
-  { ssr: false, loading: () => <div className="p-4 text-muted-foreground text-xs">Loading Editor...</div> }
+  () =>
+    import("@/components/editor/editor-panel").then((mod) => mod.EditorPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-muted-foreground text-xs">Loading Editor...</div>
+    )
+  }
 );
 
 const PreviewPanel = dynamic(
-  () => import("@/components/editor/preview-panel").then((mod) => mod.PreviewPanel),
-  { ssr: false, loading: () => <div className="p-4 text-muted-foreground text-xs">Loading Preview...</div> }
+  () =>
+    import("@/components/editor/preview-panel").then((mod) => mod.PreviewPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-muted-foreground text-xs">
+        Loading Preview...
+      </div>
+    )
+  }
 );
 
 const TableOfContentsPanel = dynamic(
-  () => import("@/components/editor/table-of-contents-panel").then((mod) => mod.TableOfContentsPanel),
+  () =>
+    import("@/components/editor/table-of-contents-panel").then(
+      (mod) => mod.TableOfContentsPanel
+    ),
   { ssr: false }
 );
 
@@ -41,10 +58,9 @@ const Toolbar = dynamic(
   { ssr: false }
 );
 
-const Sidebar = dynamic(
-  () => import("./sidebar").then((mod) => mod.Sidebar),
-  { ssr: false }
-);
+const Sidebar = dynamic(() => import("./sidebar").then((mod) => mod.Sidebar), {
+  ssr: false
+});
 
 const starterMarkdown = `# Markdown PDF Studio
 
@@ -150,7 +166,7 @@ export function EditorWorkspace() {
 
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
   const { resolvedTheme, setTheme } = useTheme();
-  
+
   const activeFileId = useFileStore((s) => s.activeFileId);
   const [prevActiveFileId, setPrevActiveFileId] = useState(activeFileId);
 
@@ -211,19 +227,22 @@ export function EditorWorkspace() {
   }, [resolvedTheme, setTheme]);
 
   // 7. Table of contents heading scroll handler
-  const handleSelectHeading = useCallback((id: string) => {
-    const target = previewRef.current?.querySelector<HTMLElement>(
-      `#${CSS.escape(id)}`
-    );
+  const handleSelectHeading = useCallback(
+    (id: string) => {
+      const target = previewRef.current?.querySelector<HTMLElement>(
+        `#${CSS.escape(id)}`
+      );
 
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-      setActiveHeadingId(id);
-      if (isDrawer) {
-        setTocOpen(false);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveHeadingId(id);
+        if (isDrawer) {
+          setTocOpen(false);
+        }
       }
-    }
-  }, [isDrawer]);
+    },
+    [isDrawer]
+  );
 
   // 8. Editor slash menu command trigger callback
   const handleSlashCommand = useCallback(
@@ -267,7 +286,7 @@ export function EditorWorkspace() {
   const showTOC = !isMobile && !isTablet;
 
   const contentPane = (
-    <div className="h-[calc(100vh-150px)]">
+    <div className="h-[calc(100vh-155px)]">
       {viewMode === "write" ? (
         <EditorPanel
           markdown={markdown}
