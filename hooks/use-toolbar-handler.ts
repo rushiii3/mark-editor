@@ -24,6 +24,8 @@ import {
   applyLineBreak
 } from "@/components/editor/editor-utils";
 
+import { useSettingsStore } from "@/store/settings-store";
+
 type UseToolbarHandlerProps = {
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>;
   onSidebarToggle: () => void;
@@ -35,6 +37,7 @@ export function useToolbarHandler({
   onSidebarToggle,
   onTocToggle
 }: UseToolbarHandlerProps) {
+  const activeFont = useSettingsStore((s) => s.activeFont);
   const handleInsertImage = useCallback(
     (url: string, alt: string) => {
       const editorInstance = editorRef.current;
@@ -107,7 +110,7 @@ export function useToolbarHandler({
           const { generateMarkdownPdfBlob } =
             await import("@/lib/editor/pdf-generator");
 
-          const blob = await generateMarkdownPdfBlob(markdown);
+          const blob = await generateMarkdownPdfBlob(markdown, activeFont);
 
           console.log(blob);
           console.log(blob instanceof Blob);

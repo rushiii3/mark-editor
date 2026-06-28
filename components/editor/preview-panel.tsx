@@ -4,6 +4,7 @@ import {
   type RefObject,
   memo
 } from "react";
+import { useSettingsStore } from "@/store/settings-store";
 
 type PreviewPanelProps = {
   html: string;
@@ -16,6 +17,17 @@ export const PreviewPanel = memo(function PreviewPanel({
   previewRef,
   previewMode = "web"
 }: PreviewPanelProps) {
+  const { activeFont } = useSettingsStore();
+
+  const getFontFamilyStyle = () => {
+    if (activeFont === "Inter") {
+      return "var(--font-sans)";
+    }
+    if (activeFont === "Times New Roman") {
+      return '"Times New Roman", Times, Georgia, serif';
+    }
+    return `'${activeFont}', sans-serif`;
+  };
 
   return (
     <section className="flex h-full min-h-80 flex-1 flex-col overflow-hidden bg-white dark:bg-background">
@@ -35,6 +47,7 @@ export const PreviewPanel = memo(function PreviewPanel({
         >
           <div
             ref={previewRef}
+            style={{ fontFamily: getFontFamilyStyle() }}
             className={`mx-auto min-h-full prose prose-neutral prose-base dark:prose-invert
 prose-hr:mt-1 prose-hr:mb-3
 prose-code:before:content-none prose-code:after:content-none 

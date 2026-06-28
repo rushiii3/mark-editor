@@ -52,12 +52,14 @@ function detectFeatures(markdown: string): FeatureFlags {
 function sanitizeHtml(html: string) {
   return DOMPurify.sanitize(html, {
     ADD_ATTR: ["class", "id", "target", "rel", "src", "href", "alt", "style"],
+    ADD_TAGS: ["figure", "figcaption"],
     ALLOW_ARIA_ATTR: true,
     ALLOW_DATA_ATTR: false,
     FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
     FORBID_TAGS: ["embed", "form", "iframe", "object", "script"],
     USE_PROFILES: { html: true },
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|data|blob):|[^&#:\/?#]*(?:[\/?#]|$))/i
+    ALLOWED_URI_REGEXP:
+      /^(?:(?:https?|mailto|tel|data|blob):|[^&#:\/?#]*(?:[\/?#]|$))/i
   });
 }
 
@@ -124,6 +126,7 @@ export async function processMarkdownPreview(
     { default: rehypeAutolinkHeadings }
   ] = await getCoreModules();
 
+  console.log("Current theme:", theme);
   const processor = remark();
 
   // ------------------
@@ -155,6 +158,12 @@ export async function processMarkdownPreview(
     processor.use(remarkMath);
   }
 
+  if (features.hasMermaid) {
+    const { default: remarkMermaidCaption } =
+      await import("@/plugins/remarkMermaidCaption");
+    processor.use(remarkMermaidCaption, { theme });
+  }
+
   processor.use(remarkRehype, {
     allowDangerousHtml: true
   });
@@ -182,14 +191,42 @@ export async function processMarkdownPreview(
   });
 
   if (features.hasMermaid) {
+    console.log("mermaidd");
     const { default: rehypeMermaid } = await import("rehype-mermaid");
-
-    console.log("Im mermaid");
     processor.use(rehypeMermaid, {
-      colorScheme: "dark",
-      strategy: "img-png"
+      strategy: "img-png",
+      colorScheme: theme === "dark" ? "dark" : "light",
+      mermaidConfig: {
+        theme: theme === "dark" ? "dark" : "default"
+      }
     });
   }
+  // if (features.hasMermaid) {
+  //   console.log("mermaidd");
+  //   const { default: rehypeMermaid } = await import("rehype-mermaid");
+  //   const mermaidOpts = {
+  //     strategy: "img-png" as const
+  //   };
+  //   processor.use(rehypeMermaid, mermaidOpts);
+  // }
+  // if (features.hasMermaid) {
+  //   console.log("mermaidd");
+  //   const { default: rehypeMermaid } = await import("rehype-mermaid");
+  //   // processor.use(rehypeMermaid, {
+  //   //   // colorScheme: "dark",
+  //   //   strategy: "img-png",
+  //   //   mermaidConfig: {
+  //   //     theme: theme === "dark" ? "dark" : "default"
+  //   //   }
+  //   // });
+
+  //   processor.use(rehypeMermaid, {
+  //     strategy: "img-png",
+  //     mermaidConfig: { theme: "default" },
+  //     theme: "dark",
+  //     colorScheme: theme === "dark" ? "dark" : "light"
+  //   });
+  // }
 
   if (features.hasCode) {
     const { default: rehypePrettyCode } = await import("rehype-pretty-code");
@@ -211,7 +248,6 @@ export async function processMarkdownPreview(
   });
 
   const file = await processor.process(markdown);
-
   const rawHtml = String(file);
 
   const resolvedHtml = await resolveLocalImages(rawHtml);

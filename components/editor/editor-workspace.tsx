@@ -19,6 +19,7 @@ import { insertSnippet } from "@/components/editor/editor-utils";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useFileStore } from "@/store/file-store";
+import { useSettingsStore } from "@/store/settings-store";
 
 const EditorPanel = dynamic(
   () => import("@/components/editor/editor-panel").then((mod) => mod.EditorPanel),
@@ -87,6 +88,57 @@ export function EditorWorkspace() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile && !isTablet);
   const [tocOpen, setTocOpen] = useState(false);
+
+  const { customFonts, loadCustomFonts } = useSettingsStore();
+  const [fontStylesHtml, setFontStylesHtml] = useState("");
+
+  // Load custom fonts on initial mount
+  useEffect(() => {
+    loadCustomFonts();
+  }, []);
+
+  // Generate dynamic @font-face style declarations when customFonts state changes
+  useEffect(() => {
+    let active = true;
+    const urlsToRevoke: string[] = [];
+
+    const loadFontStyles = async () => {
+      try {
+        const { getAllFonts } = await import("@/db/font");
+        const allFonts = await getAllFonts();
+        if (!active) return;
+
+        let stylesText = "";
+        for (const font of allFonts) {
+          const fontUrl = URL.createObjectURL(font.blob);
+          urlsToRevoke.push(fontUrl);
+
+          stylesText += `
+            @font-face {
+              font-family: '${font.family}';
+              src: url('${fontUrl}') format('truetype');
+              font-weight: ${font.weight};
+              font-style: ${font.style};
+              font-display: swap;
+            }
+          `;
+        }
+
+        setFontStylesHtml(stylesText);
+      } catch (err) {
+        console.error("Failed to generate custom font styles:", err);
+      }
+    };
+
+    loadFontStyles();
+
+    return () => {
+      active = false;
+      setTimeout(() => {
+        urlsToRevoke.forEach((url) => URL.revokeObjectURL(url));
+      }, 100);
+    };
+  }, [customFonts]);
 
   if (isMobile !== prevIsMobile || isTablet !== prevIsTablet) {
     setPrevIsMobile(isMobile);
@@ -289,6 +341,9 @@ export function EditorWorkspace() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground">
+      {fontStylesHtml && (
+        <style dangerouslySetInnerHTML={{ __html: fontStylesHtml }} />
+      )}
       <Toolbar
         onAction={handleToolbarAction}
         viewMode={viewMode}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import {
   Document,
@@ -15,33 +16,32 @@ import remarkDirective from "remark-directive";
 import { emojify } from "node-emoji";
 import { getImageBlob } from "@/db/image";
 import { mermaidToPng } from "@/lib/mermaid";
-
 // Register Google Font Inter
-// Font.register({
-//   family: "Inter",
-//   fonts: [
-//     {
-//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf",
-//       fontWeight: "normal",
-//       fontStyle: "normal"
-//     },
-//     {
-//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf",
-//       fontWeight: "bold",
-//       fontStyle: "normal"
-//     },
-//     {
-//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-italic.ttf",
-//       fontWeight: "normal",
-//       fontStyle: "italic"
-//     },
-//     {
-//       src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-italic.ttf",
-//       fontWeight: "bold",
-//       fontStyle: "italic"
-//     }
-//   ]
-// });
+Font.register({
+  family: "Inter",
+  fonts: [
+    {
+      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf",
+      fontWeight: "normal",
+      fontStyle: "normal"
+    },
+    {
+      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf",
+      fontWeight: "bold",
+      fontStyle: "normal"
+    },
+    {
+      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-italic.ttf",
+      fontWeight: "normal",
+      fontStyle: "italic"
+    },
+    {
+      src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-italic.ttf",
+      fontWeight: "bold",
+      fontStyle: "italic"
+    }
+  ]
+});
 
 Font.registerEmojiSource({
   format: "png",
@@ -58,17 +58,71 @@ async function resolveEmoji(node: AstNode) {
   }
 }
 
+function extractFrontmatterCaption(diagramSource: string): {
+  caption: string | null;
+  remainingSource: string;
+} {
+  const frontmatterMatch = diagramSource.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (!frontmatterMatch) {
+    return { caption: null, remainingSource: diagramSource };
+  }
+
+  const lines = frontmatterMatch[1].split("\n");
+  let caption: string | null = null;
+  const remainingLines: string[] = [];
+
+  for (const line of lines) {
+    const match = line.match(
+      /^\s*caption:\s*(?:"([^"]*)"|'([^']*)'|([^#\n]*))/
+    );
+    if (match) {
+      caption = match[1] ?? match[2] ?? match[3] ?? null;
+      if (caption) {
+        caption = caption.trim();
+      }
+    } else {
+      remainingLines.push(line);
+    }
+  }
+
+  const body = diagramSource.slice(frontmatterMatch[0].length);
+  const hasRemainingContent = remainingLines.some((l) => l.trim() !== "");
+  const remainingSource = hasRemainingContent
+    ? `---\n${remainingLines.join("\n")}\n---\n${body}`
+    : body;
+
+  return { caption, remainingSource };
+}
+
+const CAPTION_ATTR_PATTERN = /caption\s*=\s*"([^"]*)"|caption\s*=\s*'([^']*)'/;
+
+function extractCaptionFromMeta(
+  meta: string | null | undefined
+): string | null {
+  if (!meta) return null;
+  const match = meta.match(CAPTION_ATTR_PATTERN);
+  if (!match) return null;
+  return match[1] ?? match[2] ?? null;
+}
+
 async function renderMermaidDiagrams(node: AstNode) {
   if (node.type === "code" && node.lang === "mermaid" && node.value) {
     try {
-      const png = await mermaidToPng(node.value);
+      const frontmatterResult = extractFrontmatterCaption(node.value);
+      const cleanValue = frontmatterResult.remainingSource;
+
+      const metaCaption = extractCaptionFromMeta(node.meta);
+      const caption = metaCaption ?? frontmatterResult.caption ?? "";
+
+      const png = await mermaidToPng(cleanValue);
 
       node.type = "image";
       node.url = png;
-      node.alt = "Mermaid Diagram";
+      node.alt = caption || undefined;
 
       delete node.value;
       delete node.lang;
+      delete node.meta;
     } catch (err) {
       console.error("Mermaid render failed", err);
     }
@@ -86,6 +140,7 @@ interface AstNode {
   caption?: string;
   lang?: string;
   alt?: string;
+  meta?: string;
   depth?: 1 | 2 | 3 | 4 | 5 | 6;
   ordered?: boolean;
   break?: boolean;
@@ -97,144 +152,161 @@ interface AstNode {
   children?: AstNode[];
 }
 
-const styles = StyleSheet.create({
-  page: {
-    paddingTop: "20mm",
-    paddingBottom: "22mm",
-    paddingLeft: "18mm",
-    paddingRight: "18mm",
-    // fontFamily: "Inter",
-    fontSize: 10,
-    lineHeight: 1.55,
-    color: "#1F2937"
-  },
-  h1: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    marginTop: 18,
-    color: "#111827",
-    lineHeight: 1.4
-  },
-  h2: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8,
-    marginTop: 14,
-    color: "#111827",
-    // borderBottomWidth: 1,
-    // borderBottomColor: "#E5E7EB",
-    paddingBottom: 4
-  },
-  h3: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginBottom: 6,
-    marginTop: 10,
-    color: "#111827"
-  },
-  paragraph: {
-    marginBottom: 8
-  },
-  listItem: {
-    flexDirection: "row",
-    marginBottom: 4
-  },
-  listBullet: {
-    width: 14,
-    color: "#9CA3AF"
-  },
-  listContent: {
-    flex: 1
-  },
-  bold: {
-    fontWeight: "bold"
-  },
-  italic: {
-    fontStyle: "italic"
-  },
-  inlineCode: {
-    fontFamily: "Courier",
-    backgroundColor: "#F3F4F6",
-    color: "#1F2937",
-    paddingTop: 2,
-    paddingBottom: 2,
-    paddingLeft: 4,
-    paddingRight: 4,
-    borderRadius: 3
-  },
-  codeBlock: {
-    fontFamily: "Courier",
-    backgroundColor: "#0F172A",
-    color: "#F8FAFC",
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 8,
-    fontSize: 9
-  },
-  blockquote: {
-    borderLeftWidth: 3,
-    borderLeftColor: "#D1D5DB",
-    paddingLeft: 10,
-    marginBottom: 8,
-    color: "#4B5563",
-    fontStyle: "italic"
-  },
-  table: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderStyle: "solid",
-    marginBottom: 10
-  },
+const getStyles = (fontFamily: string) =>
+  StyleSheet.create({
+    page: {
+      paddingTop: "20mm",
+      paddingBottom: "22mm",
+      paddingLeft: "18mm",
+      paddingRight: "18mm",
+      fontFamily,
+      fontSize: 12,
+      lineHeight: 1.55,
+      color: "#000000"
+    },
+    h1: {
+      fontFamily,
+      fontSize: 22,
+      fontWeight: "bold",
+      marginBottom: 10,
+      marginTop: 18,
+      color: "#000000",
+      lineHeight: 1.4
+    },
+    h2: {
+      fontFamily,
+      fontSize: 16,
+      fontWeight: "bold",
+      marginBottom: 8,
+      marginTop: 14,
+      color: "#000000",
+      paddingBottom: 4
+    },
+    h3: {
+      fontFamily,
+      fontSize: 12,
+      fontWeight: "bold",
+      marginBottom: 6,
+      marginTop: 10,
+      color: "#000000"
+    },
+    paragraph: {
+      fontFamily,
+      marginBottom: 8
+    },
+    listItem: {
+      fontFamily,
+      flexDirection: "row",
+      marginBottom: 4
+    },
+    listBullet: {
+      fontFamily,
+      width: 14,
+      color: "#9CA3AF"
+    },
+    listContent: {
+      fontFamily,
+      flex: 1
+    },
+    bold: {
+      fontFamily,
+      fontWeight: "bold"
+    },
+    italic: {
+      fontFamily,
+      fontStyle: "italic"
+    },
+    inlineCode: {
+      fontFamily: "Courier",
+      backgroundColor: "#F3F4F6",
+      color: "#1F2937",
+      paddingTop: 2,
+      paddingBottom: 2,
+      paddingLeft: 4,
+      paddingRight: 4,
+      borderRadius: 3
+    },
+    codeBlock: {
+      fontFamily: "Courier",
+      backgroundColor: "#0F172A",
+      color: "#F8FAFC",
+      padding: 10,
+      borderRadius: 6,
+      marginBottom: 8,
+      fontSize: 9
+    },
+    blockquote: {
+      fontFamily,
+      borderLeftWidth: 3,
+      borderLeftColor: "#D1D5DB",
+      paddingLeft: 10,
+      marginBottom: 8,
+      color: "#4B5563",
+      fontStyle: "italic"
+    },
+    table: {
+      fontFamily,
+      width: "100%",
+      borderWidth: 1,
+      borderColor: "#E5E7EB",
+      borderStyle: "solid",
+      marginBottom: 10
+    },
 
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB"
-  },
+    tableRow: {
+      fontFamily,
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: "#E5E7EB"
+    },
 
-  tableCell: {
-    flex: 1,
-    padding: 6,
-    fontSize: 9,
-    borderRightWidth: 1,
-    borderRightColor: "#E5E7EB"
-  },
+    tableCell: {
+      fontFamily,
+      flex: 1,
+      padding: 6,
+      fontSize: 9,
+      borderRightWidth: 1,
+      borderRightColor: "#E5E7EB"
+    },
 
-  tableHeaderCell: {
-    fontWeight: "bold",
-    backgroundColor: "#F9FAFB",
-    color: "#111827"
-  },
-  callout: {
-    padding: 10,
-    borderLeftWidth: 4,
-    borderRadius: 4,
-    marginBottom: 10
-  },
-  calloutHeader: {
-    fontWeight: "bold",
-    fontSize: 9,
-    marginBottom: 4
-  },
-  calloutContent: {
-    fontSize: 9.5
-  },
-  footer: {
-    position: "absolute",
-    bottom: 20,
-    left: 46,
-    right: 46,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    paddingTop: 8,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 8,
-    color: "#9CA3AF"
-  }
-});
+    tableHeaderCell: {
+      fontFamily,
+      fontWeight: "bold",
+      backgroundColor: "#F9FAFB",
+      color: "#111827"
+    },
+    callout: {
+      fontFamily,
+      padding: 10,
+      borderLeftWidth: 4,
+      borderRadius: 4,
+      marginBottom: 10
+    },
+    calloutHeader: {
+      fontFamily,
+      fontWeight: "bold",
+      fontSize: 9,
+      marginBottom: 4
+    },
+    calloutContent: {
+      fontFamily,
+      fontSize: 9.5
+    },
+    footer: {
+      fontFamily,
+      position: "absolute",
+      bottom: 20,
+      left: 46,
+      right: 46,
+      borderTopWidth: 1,
+      borderTopColor: "#E5E7EB",
+      paddingTop: 8,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      fontSize: 8,
+      color: "#9CA3AF"
+    }
+  });
 
 async function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -337,31 +409,41 @@ async function resolveAstLocalImages(node: AstNode) {
   }
 }
 
-function renderChildren(children?: AstNode[]): React.ReactNode[] {
-  if (!children) return [];
-  return children.map((child, index) => renderInlineNode(child, index));
+function renderChildren(children: AstNode[] | undefined, styles: any) {
+  if (!children) return null;
+  return children.map((child, index) => renderInlineNode(child, index, styles));
 }
 
-function renderInlineNode(node: AstNode, index: number): React.ReactNode {
+function renderInlineNode(
+  node: AstNode,
+  index: number,
+  styles: any
+): React.ReactNode {
   switch (node.type) {
     case "text":
       return node.value;
     case "strong":
       return (
         <Text key={index} style={styles.bold}>
-          {renderChildren(node.children)}
+          {renderChildren(node.children, styles)}
         </Text>
       );
     case "emphasis":
       return (
         <Text key={index} style={styles.italic}>
-          {renderChildren(node.children)}
+          {renderChildren(node.children, styles)}
         </Text>
       );
     case "delete":
       return (
-        <Text key={index} style={{ textDecoration: "line-through" }}>
-          {renderChildren(node.children)}
+        <Text
+          key={index}
+          style={{
+            textDecoration: "line-through",
+            fontFamily: styles.page.fontFamily
+          }}
+        >
+          {renderChildren(node.children, styles)}
         </Text>
       );
     case "inlineCode":
@@ -374,10 +456,14 @@ function renderInlineNode(node: AstNode, index: number): React.ReactNode {
       return (
         <Link
           key={index}
-          style={{ color: "#2563EB", textDecoration: "underline" }}
+          style={{
+            color: "#2563EB",
+            textDecoration: "underline",
+            fontFamily: styles.page.fontFamily
+          }}
           src={node.url}
         >
-          {renderChildren(node.children)}
+          {renderChildren(node.children, styles)}
         </Link>
       );
     case "break":
@@ -387,7 +473,11 @@ function renderInlineNode(node: AstNode, index: number): React.ReactNode {
   }
 }
 
-function renderBlockNode(node: AstNode, index: number): React.ReactNode {
+function renderBlockNode(
+  node: AstNode,
+  index: number,
+  styles: any
+): React.ReactNode {
   console.log("Node type:", node.type, node);
   switch (node.type) {
     case "heading": {
@@ -395,7 +485,7 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
         node.depth === 1 ? styles.h1 : node.depth === 2 ? styles.h2 : styles.h3;
       return (
         <Text key={index} style={headingStyle} break={node.break}>
-          {renderChildren(node.children)}
+          {renderChildren(node.children, styles)}
         </Text>
       );
     }
@@ -407,10 +497,14 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
           <View key={index} style={styles.paragraph}>
             {node.children?.map((child, i) => {
               if (child.type === "image") {
-                return renderBlockNode(child, i);
+                return renderBlockNode(child, i, styles);
               }
 
-              return <Text key={i}>{renderInlineNode(child, i)}</Text>;
+              return (
+                <Text key={i} style={{ fontFamily: styles.page.fontFamily }}>
+                  {renderInlineNode(child, i, styles)}
+                </Text>
+              );
             })}
           </View>
         );
@@ -418,14 +512,14 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
 
       return (
         <Text key={index} style={styles.paragraph}>
-          {renderChildren(node.children)}
+          {renderChildren(node.children, styles)}
         </Text>
       );
     }
     case "blockquote":
       return (
         <View key={index} style={styles.blockquote} break={node.break}>
-          {node.children?.map((child, i) => renderBlockNode(child, i))}
+          {node.children?.map((child, i) => renderBlockNode(child, i, styles))}
         </View>
       );
     case "code":
@@ -445,7 +539,7 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
                 <Text style={styles.listBullet}>{bullet}</Text>
                 <View style={styles.listContent}>
                   {item.children?.map((child, idx) =>
-                    renderBlockNode(child, idx)
+                    renderBlockNode(child, idx, styles)
                   )}
                 </View>
               </View>
@@ -482,7 +576,9 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
                         : styles.tableCell
                     }
                   >
-                    <Text>{renderChildren(cell.children)}</Text>
+                    <Text style={{ fontFamily: styles.page.fontFamily }}>
+                      {renderChildren(cell.children, styles)}
+                    </Text>
                   </View>
                 );
               })}
@@ -491,8 +587,6 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
         </View>
       );
     case "image":
-      // console.log(node.url);
-
       return (
         <View
           key={index}
@@ -504,7 +598,14 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
             style={{ width: "100%", objectFit: "contain" }}
           />
           {node.alt && (
-            <Text style={{ fontSize: 8, color: "#6B7280", marginTop: 4 }}>
+            <Text
+              style={{
+                fontSize: 8,
+                color: "#6B7280",
+                marginTop: 4,
+                fontFamily: styles.page.fontFamily
+              }}
+            >
               {node.alt}
             </Text>
           )}
@@ -571,7 +672,9 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
               {label}
             </Text>
             <View style={styles.calloutContent}>
-              {contentChildren.map((child, idx) => renderBlockNode(child, idx))}
+              {contentChildren.map((child, idx) =>
+                renderBlockNode(child, idx, styles)
+              )}
             </View>
           </View>
         );
@@ -602,18 +705,29 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
             }}
             break={node.break}
           >
-            <Text style={{ fontWeight: "bold", fontSize: 9, color: "#374151" }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                fontSize: 9,
+                color: "#374151",
+                fontFamily: styles.page.fontFamily
+              }}
+            >
               {title}
             </Text>
             <View style={{ marginTop: 4 }}>
-              {contentChildren.map((child, idx) => renderBlockNode(child, idx))}
+              {contentChildren.map((child, idx) =>
+                renderBlockNode(child, idx, styles)
+              )}
             </View>
           </View>
         );
       }
       return (
         <View key={index}>
-          {node.children?.map((child, idx) => renderBlockNode(child, idx))}
+          {node.children?.map((child, idx) =>
+            renderBlockNode(child, idx, styles)
+          )}
         </View>
       );
     }
@@ -636,12 +750,18 @@ function renderBlockNode(node: AstNode, index: number): React.ReactNode {
 
 interface MarkdownPdfDocumentProps {
   ast: AstNode;
+  activeFont?: string;
 }
 
-export function MarkdownPdfDocument({ ast }: MarkdownPdfDocumentProps) {
+export function MarkdownPdfDocument({
+  ast,
+  activeFont = "Inter"
+}: MarkdownPdfDocumentProps) {
+  const styles = getStyles(activeFont);
+
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={[styles.page, { fontFamily: activeFont }]}>
         <View>
           {/* {ast.children?.map((child: AstNode, index: number) =>
             renderBlockNode(child, index)
@@ -649,7 +769,7 @@ export function MarkdownPdfDocument({ ast }: MarkdownPdfDocumentProps) {
           {ast.children?.map((child, index) => {
             console.log(index, child.type, child.children?.length);
 
-            return renderBlockNode(child, index);
+            return renderBlockNode(child, index, styles);
           })}
         </View>
       </Page>
@@ -657,7 +777,10 @@ export function MarkdownPdfDocument({ ast }: MarkdownPdfDocumentProps) {
   );
 }
 
-export async function generateMarkdownPdfBlob(markdown: string): Promise<Blob> {
+export async function generateMarkdownPdfBlob(
+  markdown: string,
+  activeFont: string = "Inter"
+): Promise<Blob> {
   const processor = remark()
     .use(remarkGfm)
     // .use(remarkEmoji)
@@ -675,8 +798,81 @@ export async function generateMarkdownPdfBlob(markdown: string): Promise<Blob> {
 
   await resolveEmoji(ast);
 
+  // Register custom user-uploaded fonts dynamically
+  if (
+    activeFont !== "Inter" &&
+    activeFont !== "Helvetica" &&
+    activeFont !== "Courier"
+  ) {
+    try {
+      const { getFontsByFamily } = await import("@/db/font");
+      const storedFonts = await getFontsByFamily(activeFont);
+      console.log(storedFonts);
+
+      if (storedFonts && storedFonts.length > 0) {
+        // Find specific variants or fallback gracefully to avoid react-pdf crashes
+        const regular =
+          storedFonts.find(
+            (f) => f.weight === "normal" && f.style === "normal"
+          ) || storedFonts[0];
+        const bold =
+          storedFonts.find(
+            (f) => f.weight === "bold" && f.style === "normal"
+          ) || regular;
+        const italic =
+          storedFonts.find(
+            (f) => f.weight === "normal" && f.style === "italic"
+          ) || regular;
+        const boldItalic =
+          storedFonts.find(
+            (f) => f.weight === "bold" && f.style === "italic"
+          ) ||
+          italic ||
+          bold ||
+          regular;
+
+        const fontFaces = [
+          {
+            src: URL.createObjectURL(regular.blob),
+            fontWeight: "normal" as never,
+            fontStyle: "normal" as never
+          },
+          {
+            src: URL.createObjectURL(bold.blob),
+            fontWeight: "bold" as never,
+            fontStyle: "normal" as never
+          },
+          {
+            src: URL.createObjectURL(italic.blob),
+            fontWeight: "normal" as never,
+            fontStyle: "italic" as never
+          },
+          {
+            src: URL.createObjectURL(boldItalic.blob),
+            fontWeight: "bold" as never,
+            fontStyle: "italic" as never
+          }
+        ];
+
+        console.log(fontFaces);
+
+        Font.register({
+          family: activeFont,
+          fonts: fontFaces
+        });
+      }
+    } catch (err) {
+      console.error(
+        `Failed to dynamically load/register custom font ${activeFont}:`,
+        err
+      );
+    }
+  }
+
   const { pdf } = await import("@react-pdf/renderer");
-  const resolvedPdf = await pdf(<MarkdownPdfDocument ast={ast} />).toBlob();
+  const resolvedPdf = await pdf(
+    <MarkdownPdfDocument ast={ast} activeFont={activeFont} />
+  ).toBlob();
   console.log(resolvedPdf);
   return resolvedPdf;
 }

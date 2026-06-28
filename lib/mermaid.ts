@@ -151,7 +151,10 @@ export async function mermaidToPng(
       } catch (err) {
         URL.revokeObjectURL(url);
         // Catch SecurityError (tainted canvas) or other canvas exceptions and fallback to Canvg
-        console.warn("Native SVG image canvas render failed, falling back to Canvg:", err);
+        console.warn(
+          "Native SVG image canvas render failed, falling back to Canvg:",
+          err
+        );
         try {
           const canvgDataUrl = await renderWithCanvg();
           resolve(canvgDataUrl);

@@ -1,7 +1,8 @@
 "use client";
 
-import { type ReactNode, memo } from "react";
+import { type ReactNode, memo, useState } from "react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { SettingsDialog } from "./settings-dialog";
 import {
   ArrowTurnBackwardIcon,
   ArrowTurnForwardIcon,
@@ -207,6 +208,7 @@ export const Toolbar = memo(function Toolbar({
   onInsertLink,
   viewMode
 }: ToolbarProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const topMode =
     viewMode === "write"
       ? "write"
@@ -295,7 +297,7 @@ export const Toolbar = memo(function Toolbar({
             />
             Theme
           </Button>
-          <Button variant="ghost" size="lg">
+          <Button variant="ghost" size="lg" onClick={() => setSettingsOpen(true)}>
             <HugeiconsIcon
               icon={Settings05Icon}
               size={16}
@@ -330,7 +332,7 @@ export const Toolbar = memo(function Toolbar({
                 <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
                 <span>Help</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="gap-2 cursor-pointer">
                 <HugeiconsIcon icon={Settings05Icon} size={16} />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -534,6 +536,7 @@ export const Toolbar = memo(function Toolbar({
           </ToolTipWrapper>
         </div>
       </div>
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 });
