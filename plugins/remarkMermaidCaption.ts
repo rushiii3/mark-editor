@@ -1,5 +1,4 @@
 import type { Code, Parent, Root } from "mdast";
-import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
 
 export type RemarkMermaidCaptionOptions = {
@@ -113,9 +112,9 @@ function injectThemeFrontmatter(
  * injects a theme into the diagram's own frontmatter, and wraps the code node
  * inside a nested <figure> HAST node structure with a <figcaption>.
  */
-const remarkMermaidCaption: Plugin<[RemarkMermaidCaptionOptions?], Root> = (
-  options
-) => {
+export default function remarkMermaidCaption(
+  options: RemarkMermaidCaptionOptions = {}
+) {
   return (tree: Root) => {
     visit(tree, "code", (node: Code, index, parent: Parent | undefined) => {
       if (
@@ -173,6 +172,4 @@ const remarkMermaidCaption: Plugin<[RemarkMermaidCaptionOptions?], Root> = (
       return index + 1;
     });
   };
-};
-
-export default remarkMermaidCaption;
+}
