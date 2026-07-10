@@ -1,263 +1,464 @@
-import type { editor, IRange } from "monaco-editor";
+// import type { editor, IRange } from "monaco-editor";
 
-export function applyUndo(editorInstance: editor.IStandaloneCodeEditor) {
-  editorInstance.trigger("keyboard", "undo", null);
+// export function applyUndo(editorInstance: editor.IStandaloneCodeEditor) {
+//   editorInstance.trigger("keyboard", "undo", null);
+// }
+
+// export function applyRedo(editorInstance: editor.IStandaloneCodeEditor) {
+//   editorInstance.trigger("keyboard", "redo", null);
+// }
+
+// export function applyWrap(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   prefix: string,
+//   suffix: string = prefix
+// ) {
+//   const selection = editorInstance.getSelection();
+//   const model = editorInstance.getModel();
+
+//   if (!model || !selection) {
+//     return;
+//   }
+
+//   const selectedText = model.getValueInRange(selection);
+//   const insertText = `${prefix}${selectedText}${suffix}`;
+
+//   const startOffset = model.getOffsetAt({
+//     lineNumber: selection.startLineNumber,
+//     column: selection.startColumn
+//   });
+
+//   editorInstance.pushUndoStop();
+//   editorInstance.executeEdits("markdown-toolbar", [
+//     {
+//       range: selection,
+//       text: insertText,
+//       forceMoveMarkers: true
+//     }
+//   ]);
+//   editorInstance.pushUndoStop();
+
+//   if (selectedText) {
+//     const selectionStart = model.getPositionAt(startOffset + prefix.length);
+//     const selectionEnd = model.getPositionAt(
+//       startOffset + prefix.length + selectedText.length
+//     );
+
+//     editorInstance.setSelection({
+//       startLineNumber: selectionStart.lineNumber,
+//       startColumn: selectionStart.column,
+//       endLineNumber: selectionEnd.lineNumber,
+//       endColumn: selectionEnd.column
+//     });
+//   } else {
+//     editorInstance.setPosition(
+//       model.getPositionAt(startOffset + prefix.length)
+//     );
+//   }
+
+//   editorInstance.focus();
+// }
+
+// export function applyLinePrefix(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   prefix: string
+// ) {
+//   const model = editorInstance.getModel();
+//   const selection = editorInstance.getSelection();
+
+//   if (!model || !selection) {
+//     return;
+//   }
+
+//   const startLine = selection.startLineNumber;
+//   const endLine = selection.endLineNumber;
+//   const edits: editor.IIdentifiedSingleEditOperation[] = [];
+
+//   for (let line = startLine; line <= endLine; line += 1) {
+//     edits.push({
+//       range: {
+//         startLineNumber: line,
+//         startColumn: 1,
+//         endLineNumber: line,
+//         endColumn: 1
+//       },
+//       text: prefix,
+//       forceMoveMarkers: true
+//     });
+//   }
+
+//   editorInstance.pushUndoStop();
+//   editorInstance.executeEdits("markdown-toolbar", edits);
+//   editorInstance.pushUndoStop();
+
+//   const endLineLength = model.getLineMaxColumn(endLine);
+//   editorInstance.setSelection({
+//     startLineNumber: startLine,
+//     startColumn: 1,
+//     endLineNumber: endLine,
+//     endColumn: endLineLength
+//   });
+//   editorInstance.focus();
+// }
+
+// export function applyBold(editorInstance: editor.IStandaloneCodeEditor) {
+//   applyWrap(editorInstance, "**");
+// }
+
+// export function applyItalic(editorInstance: editor.IStandaloneCodeEditor) {
+//   applyWrap(editorInstance, "*");
+// }
+
+// export function applyStrikethrough(
+//   editorInstance: editor.IStandaloneCodeEditor
+// ) {
+//   applyWrap(editorInstance, "~~");
+// }
+
+// export function applyInlineCode(editorInstance: editor.IStandaloneCodeEditor) {
+//   applyWrap(editorInstance, "`");
+// }
+
+// export function applyList(editorInstance: editor.IStandaloneCodeEditor) {
+//   applyLinePrefix(editorInstance, "- ");
+// }
+
+// export function applyOrderedList(editorInstance: editor.IStandaloneCodeEditor) {
+//   applyLinePrefix(editorInstance, "1. ");
+// }
+// export function applyTaskList(editorInstance: editor.IStandaloneCodeEditor) {
+//   applyLinePrefix(editorInstance, "- [ ] ");
+// }
+
+// export function applyBlockQuote(editorInstance: editor.IStandaloneCodeEditor) {
+//   applyLinePrefix(editorInstance, "> ");
+// }
+
+// export function applyHeading(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   level: number
+// ) {
+//   applyLinePrefix(editorInstance, `${"#".repeat(level)} `);
+// }
+
+// export function insertSnippet(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   text: string,
+//   cursorOffset = text.length
+// ) {
+//   const selection = editorInstance.getSelection();
+//   const model = editorInstance.getModel();
+
+//   if (!model || !selection) {
+//     return;
+//   }
+
+//   editorInstance.pushUndoStop();
+//   editorInstance.executeEdits("markdown-toolbar", [
+//     {
+//       range: selection,
+//       text: text,
+//       forceMoveMarkers: true
+//     }
+//   ]);
+//   editorInstance.pushUndoStop();
+
+//   const startOffset = model.getOffsetAt({
+//     lineNumber: selection.startLineNumber,
+//     column: selection.startColumn
+//   });
+
+//   const position = model.getPositionAt(startOffset + cursorOffset);
+//   editorInstance.setPosition(position);
+//   editorInstance.focus();
+// }
+
+// export function replaceSnippet(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   range: IRange,
+//   text: string,
+//   cursorOffset = text.length
+// ) {
+//   const model = editorInstance.getModel();
+
+//   if (!model) {
+//     return;
+//   }
+
+//   const startOffset = model.getOffsetAt({
+//     lineNumber: range.startLineNumber,
+//     column: range.startColumn
+//   });
+
+//   editorInstance.pushUndoStop();
+//   editorInstance.executeEdits("markdown-toolbar", [
+//     {
+//       range,
+//       text,
+//       forceMoveMarkers: true
+//     }
+//   ]);
+//   editorInstance.pushUndoStop();
+
+//   const position = model.getPositionAt(startOffset + cursorOffset);
+//   editorInstance.setPosition(position);
+//   editorInstance.focus();
+// }
+
+// export function insertHorizontalLine(
+//   editorInstance: editor.IStandaloneCodeEditor
+// ) {
+//   insertSnippet(editorInstance, "\n---\n", 5);
+// }
+
+// export function insertLink(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   markdown: string
+// ) {
+//   insertSnippet(editorInstance, markdown, 1);
+// }
+
+// export function insertImage(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   markdown: string
+// ) {
+//   insertSnippet(editorInstance, markdown, 2);
+// }
+
+// export function insertTable(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   table: string
+// ) {
+//   insertSnippet(editorInstance, table, 13);
+// }
+
+// export function applyToggle(editorInstance: editor.IStandaloneCodeEditor) {
+//   insertSnippet(editorInstance, ":::collapse[Title]\n\nYour content\n\n:::");
+// }
+
+// export function applyCodeBlock(editorInstance: editor.IStandaloneCodeEditor) {
+//   const selection = editorInstance.getSelection();
+//   const model = editorInstance.getModel();
+
+//   if (!model || !selection) {
+//     return;
+//   }
+
+//   const selectedText = model.getValueInRange(selection);
+//   const text = `\n\`\`\`\n${selectedText}\n\`\`\`\n`;
+
+//   insertSnippet(editorInstance, text, 5);
+// }
+
+// export function applyCallout(
+//   editorInstance: editor.IStandaloneCodeEditor,
+//   type: string
+// ) {
+//   const text = `\n:::callout[${type}]\n\nYour content\n\n:::\n`;
+//   insertSnippet(editorInstance, text, 6);
+// }
+
+// export function applyLineBreak(editorInstance: editor.IStandaloneCodeEditor) {
+//   insertSnippet(editorInstance, "<br>", 1);
+// }
+
+import type { EditorView } from "@uiw/react-codemirror";
+// import { undo, redo } from "@codemirror/commands";
+// import type { ChangeSpec } from "@codemirror/state";
+
+// Note: CodeMirror works with absolute document offsets (numbers) rather
+// than Monaco's { lineNumber, column } positions, so callers should pass
+// plain { from, to } offset ranges instead of Monaco's IRange.
+export interface OffsetRange {
+  from: number;
+  to: number;
 }
 
-export function applyRedo(editorInstance: editor.IStandaloneCodeEditor) {
-  editorInstance.trigger("keyboard", "redo", null);
+export function applyUndo(view: EditorView) {
+  // undo(view);
+}
+
+export function applyRedo(view: EditorView) {
+  // redo(view);
 }
 
 export function applyWrap(
-  editorInstance: editor.IStandaloneCodeEditor,
+  view: EditorView,
   prefix: string,
   suffix: string = prefix
 ) {
-  const selection = editorInstance.getSelection();
-  const model = editorInstance.getModel();
+  const { state } = view;
+  const selection = state.selection.main;
 
-  if (!model || !selection) {
-    return;
-  }
-
-  const selectedText = model.getValueInRange(selection);
+  const selectedText = state.sliceDoc(selection.from, selection.to);
   const insertText = `${prefix}${selectedText}${suffix}`;
 
-  const startOffset = model.getOffsetAt({
-    lineNumber: selection.startLineNumber,
-    column: selection.startColumn
+  view.dispatch({
+    changes: {
+      from: selection.from,
+      to: selection.to,
+      insert: insertText
+    },
+    selection: selectedText
+      ? {
+          anchor: selection.from + prefix.length,
+          head: selection.from + prefix.length + selectedText.length
+        }
+      : {
+          anchor: selection.from + prefix.length
+        },
+    scrollIntoView: true
   });
 
-  editorInstance.pushUndoStop();
-  editorInstance.executeEdits("markdown-toolbar", [
-    {
-      range: selection,
-      text: insertText,
-      forceMoveMarkers: true
-    }
-  ]);
-  editorInstance.pushUndoStop();
-
-  if (selectedText) {
-    const selectionStart = model.getPositionAt(startOffset + prefix.length);
-    const selectionEnd = model.getPositionAt(
-      startOffset + prefix.length + selectedText.length
-    );
-
-    editorInstance.setSelection({
-      startLineNumber: selectionStart.lineNumber,
-      startColumn: selectionStart.column,
-      endLineNumber: selectionEnd.lineNumber,
-      endColumn: selectionEnd.column
-    });
-  } else {
-    editorInstance.setPosition(
-      model.getPositionAt(startOffset + prefix.length)
-    );
-  }
-
-  editorInstance.focus();
+  view.focus();
 }
 
-export function applyLinePrefix(
-  editorInstance: editor.IStandaloneCodeEditor,
-  prefix: string
-) {
-  const model = editorInstance.getModel();
-  const selection = editorInstance.getSelection();
+export function applyLinePrefix(view: EditorView, prefix: string) {
+  const { state } = view;
+  const selection = state.selection.main;
 
-  if (!model || !selection) {
-    return;
+  const startLine = state.doc.lineAt(selection.from);
+  const endLine = state.doc.lineAt(selection.to);
+
+  // const changes: ChangeSpec[] = [];
+
+  const changes = [];
+  for (
+    let lineNumber = startLine.number;
+    lineNumber <= endLine.number;
+    lineNumber += 1
+  ) {
+    const line = state.doc.line(lineNumber);
+    changes.push({ from: line.from, insert: prefix });
   }
 
-  const startLine = selection.startLineNumber;
-  const endLine = selection.endLineNumber;
-  const edits: editor.IIdentifiedSingleEditOperation[] = [];
+  const totalLines = endLine.number - startLine.number + 1;
+  const newEndOffset = endLine.to + prefix.length * totalLines;
 
-  for (let line = startLine; line <= endLine; line += 1) {
-    edits.push({
-      range: {
-        startLineNumber: line,
-        startColumn: 1,
-        endLineNumber: line,
-        endColumn: 1
-      },
-      text: prefix,
-      forceMoveMarkers: true
-    });
-  }
-
-  editorInstance.pushUndoStop();
-  editorInstance.executeEdits("markdown-toolbar", edits);
-  editorInstance.pushUndoStop();
-
-  const endLineLength = model.getLineMaxColumn(endLine);
-  editorInstance.setSelection({
-    startLineNumber: startLine,
-    startColumn: 1,
-    endLineNumber: endLine,
-    endColumn: endLineLength
+  view.dispatch({
+    changes,
+    selection: {
+      anchor: startLine.from,
+      head: newEndOffset
+    },
+    scrollIntoView: true
   });
-  editorInstance.focus();
+
+  view.focus();
 }
 
-export function applyBold(editorInstance: editor.IStandaloneCodeEditor) {
-  applyWrap(editorInstance, "**");
+export function applyBold(view: EditorView) {
+  applyWrap(view, "**");
 }
 
-export function applyItalic(editorInstance: editor.IStandaloneCodeEditor) {
-  applyWrap(editorInstance, "*");
+export function applyItalic(view: EditorView) {
+  applyWrap(view, "*");
 }
 
-export function applyStrikethrough(
-  editorInstance: editor.IStandaloneCodeEditor
-) {
-  applyWrap(editorInstance, "~~");
+export function applyStrikethrough(view: EditorView) {
+  applyWrap(view, "~~");
 }
 
-export function applyInlineCode(editorInstance: editor.IStandaloneCodeEditor) {
-  applyWrap(editorInstance, "`");
+export function applyInlineCode(view: EditorView) {
+  applyWrap(view, "`");
 }
 
-export function applyList(editorInstance: editor.IStandaloneCodeEditor) {
-  applyLinePrefix(editorInstance, "- ");
+export function applyList(view: EditorView) {
+  applyLinePrefix(view, "- ");
 }
 
-export function applyOrderedList(editorInstance: editor.IStandaloneCodeEditor) {
-  applyLinePrefix(editorInstance, "1. ");
-}
-export function applyTaskList(editorInstance: editor.IStandaloneCodeEditor) {
-  applyLinePrefix(editorInstance, "- [ ] ");
+export function applyOrderedList(view: EditorView) {
+  applyLinePrefix(view, "1. ");
 }
 
-export function applyBlockQuote(editorInstance: editor.IStandaloneCodeEditor) {
-  applyLinePrefix(editorInstance, "> ");
+export function applyTaskList(view: EditorView) {
+  applyLinePrefix(view, "- [ ] ");
 }
 
-export function applyHeading(
-  editorInstance: editor.IStandaloneCodeEditor,
-  level: number
-) {
-  applyLinePrefix(editorInstance, `${"#".repeat(level)} `);
+export function applyBlockQuote(view: EditorView) {
+  applyLinePrefix(view, "> ");
+}
+
+export function applyHeading(view: EditorView, level: number) {
+  applyLinePrefix(view, `${"#".repeat(level)} `);
 }
 
 export function insertSnippet(
-  editorInstance: editor.IStandaloneCodeEditor,
+  view: EditorView,
   text: string,
   cursorOffset = text.length
 ) {
-  const selection = editorInstance.getSelection();
-  const model = editorInstance.getModel();
+  const selection = view.state.selection.main;
 
-  if (!model || !selection) {
-    return;
-  }
-
-  editorInstance.pushUndoStop();
-  editorInstance.executeEdits("markdown-toolbar", [
-    {
-      range: selection,
-      text: text,
-      forceMoveMarkers: true
-    }
-  ]);
-  editorInstance.pushUndoStop();
-
-  const startOffset = model.getOffsetAt({
-    lineNumber: selection.startLineNumber,
-    column: selection.startColumn
+  view.dispatch({
+    changes: {
+      from: selection.from,
+      to: selection.to,
+      insert: text
+    },
+    selection: {
+      anchor: selection.from + cursorOffset
+    },
+    scrollIntoView: true
   });
 
-  const position = model.getPositionAt(startOffset + cursorOffset);
-  editorInstance.setPosition(position);
-  editorInstance.focus();
+  view.focus();
 }
 
 export function replaceSnippet(
-  editorInstance: editor.IStandaloneCodeEditor,
-  range: IRange,
+  view: EditorView,
+  range: OffsetRange,
   text: string,
   cursorOffset = text.length
 ) {
-  const model = editorInstance.getModel();
-
-  if (!model) {
-    return;
-  }
-
-  const startOffset = model.getOffsetAt({
-    lineNumber: range.startLineNumber,
-    column: range.startColumn
+  view.dispatch({
+    changes: {
+      from: range.from,
+      to: range.to,
+      insert: text
+    },
+    selection: {
+      anchor: range.from + cursorOffset
+    },
+    scrollIntoView: true
   });
 
-  editorInstance.pushUndoStop();
-  editorInstance.executeEdits("markdown-toolbar", [
-    {
-      range,
-      text,
-      forceMoveMarkers: true
-    }
-  ]);
-  editorInstance.pushUndoStop();
-
-  const position = model.getPositionAt(startOffset + cursorOffset);
-  editorInstance.setPosition(position);
-  editorInstance.focus();
+  view.focus();
 }
 
-export function insertHorizontalLine(
-  editorInstance: editor.IStandaloneCodeEditor
-) {
-  insertSnippet(editorInstance, "\n---\n", 5);
+export function insertHorizontalLine(view: EditorView) {
+  insertSnippet(view, "\n---\n", 5);
 }
 
-export function insertLink(
-  editorInstance: editor.IStandaloneCodeEditor,
-  markdown: string
-) {
-  insertSnippet(editorInstance, markdown, 1);
+export function insertLink(view: EditorView, markdown: string) {
+  insertSnippet(view, markdown, 1);
 }
 
-export function insertImage(
-  editorInstance: editor.IStandaloneCodeEditor,
-  markdown: string
-) {
-  insertSnippet(editorInstance, markdown, 2);
+export function insertImage(view: EditorView, markdown: string) {
+  insertSnippet(view, markdown, 2);
 }
 
-export function insertTable(
-  editorInstance: editor.IStandaloneCodeEditor,
-  table: string
-) {
-  insertSnippet(editorInstance, table, 13);
+export function insertTable(view: EditorView, table: string) {
+  insertSnippet(view, table, 13);
 }
 
-export function applyToggle(editorInstance: editor.IStandaloneCodeEditor) {
-  insertSnippet(editorInstance, ":::collapse[Title]\n\nYour content\n\n:::");
+export function applyToggle(view: EditorView) {
+  insertSnippet(view, ":::collapse[Title]\n\nYour content\n\n:::");
 }
 
-export function applyCodeBlock(editorInstance: editor.IStandaloneCodeEditor) {
-  const selection = editorInstance.getSelection();
-  const model = editorInstance.getModel();
-
-  if (!model || !selection) {
-    return;
-  }
-
-  const selectedText = model.getValueInRange(selection);
+export function applyCodeBlock(view: EditorView) {
+  const selection = view.state.selection.main;
+  const selectedText = view.state.sliceDoc(selection.from, selection.to);
   const text = `\n\`\`\`\n${selectedText}\n\`\`\`\n`;
 
-  insertSnippet(editorInstance, text, 5);
+  insertSnippet(view, text, 5);
 }
 
-export function applyCallout(
-  editorInstance: editor.IStandaloneCodeEditor,
-  type: string
-) {
+export function applyCallout(view: EditorView, type: string) {
   const text = `\n:::callout[${type}]\n\nYour content\n\n:::\n`;
-  insertSnippet(editorInstance, text, 6);
+  insertSnippet(view, text, 6);
 }
 
-export function applyLineBreak(editorInstance: editor.IStandaloneCodeEditor) {
-  insertSnippet(editorInstance, "<br>", 1);
+export function applyLineBreak(view: EditorView) {
+  insertSnippet(view, "<br>", 1);
 }

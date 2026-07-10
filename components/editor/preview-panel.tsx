@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  type RefObject,
-  memo
-} from "react";
+import { type RefObject, memo, useLayoutEffect, useRef } from "react";
 import { useSettingsStore } from "@/store/settings-store";
 
 type PreviewPanelProps = {
@@ -19,6 +16,30 @@ export const PreviewPanel = memo(function PreviewPanel({
 }: PreviewPanelProps) {
   const { activeFont } = useSettingsStore();
 
+  // dangerouslySetInnerHTML fully replaces the DOM subtree on every
+  // update, which can silently shift scroll position if content above
+  // the viewport changes height (collapsibles, images loading, tables).
+  // We track the scroll ratio continuously and reapply it right after
+  // new HTML lands, so the reader's relative position stays stable.
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollRatioRef = useRef(0);
+
+  const handleScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    scrollRatioRef.current = maxScroll > 0 ? el.scrollTop / maxScroll : 0;
+  };
+
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    el.scrollTop = scrollRatioRef.current * maxScroll;
+  }, [html]);
+
   const getFontFamilyStyle = () => {
     if (activeFont === "Inter") {
       return "var(--font-sans)";
@@ -32,19 +53,11 @@ export const PreviewPanel = memo(function PreviewPanel({
   return (
     <section className="flex h-full min-h-80 flex-1 flex-col overflow-hidden bg-white dark:bg-background">
       <div
-        // className={previewMode === "pdf" ? "pdf-preview-canvas" : ""}
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
         className="flex-1 min-h-0 h-full overflow-y-auto"
       >
-        <div
-        // className={previewMode === "pdf" ? "pdf-page-stack" : ""}
-        // style={
-        //   previewMode === "pdf"
-        //     ? ({
-        //         ["--pdf-page-count" as string]: String(pageCount)
-        //       } as CSSProperties)
-        //     : undefined
-        // }
-        >
+        <div>
           <div
             ref={previewRef}
             style={{ fontFamily: getFontFamilyStyle() }}

@@ -1,4 +1,4 @@
-import type { IRange } from "monaco-editor";
+import type { Range, RangeValue } from "@uiw/react-codemirror";
 
 export type ToolbarAction =
   | "undo"
@@ -42,7 +42,7 @@ export type SlashMenuState = {
   open: boolean;
   top: number;
   left: number;
-  range: IRange | null;
+  range: Range<RangeValue> | null;
 };
 
 export type SlashCommand = {

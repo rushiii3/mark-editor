@@ -1,5 +1,5 @@
 import { useCallback, type RefObject } from "react";
-import type { editor } from "monaco-editor";
+import { type EditorView } from "@uiw/react-codemirror";
 import type { ToolbarAction } from "@/components/editor/types";
 import {
   applyBlockQuote,
@@ -27,7 +27,7 @@ import {
 import { useSettingsStore } from "@/store/settings-store";
 
 type UseToolbarHandlerProps = {
-  editorRef: RefObject<editor.IStandaloneCodeEditor | null>;
+  editorRef: RefObject<EditorView | null>;
   onSidebarToggle: () => void;
   onTocToggle?: () => void;
 };
@@ -105,7 +105,8 @@ export function useToolbarHandler({
         if (!editorInstance) {
           return;
         }
-        const markdown = editorInstance.getValue();
+        const markdown = editorInstance.state.doc.toString();
+        console.log(markdown);
         try {
           const { generateMarkdownPdfBlob } =
             await import("@/lib/editor/pdf-generator");
@@ -231,7 +232,7 @@ export function useToolbarHandler({
           break;
       }
     },
-    [editorRef, onSidebarToggle]
+    [editorRef, onSidebarToggle, onTocToggle, activeFont]
   );
 
   return {

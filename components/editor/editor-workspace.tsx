@@ -13,13 +13,14 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useMarkdownPreview } from "@/hooks/use-markdown-preview";
 import { useDocumentPersistence } from "@/hooks/use-document-persistence";
-import { useMonacoHandler } from "@/hooks/use-monaco-handler";
+// import { useMonacoHandler } from "@/hooks/use-monaco-handler";
 import { useToolbarHandler } from "@/hooks/use-toolbar-handler";
 import { insertSnippet } from "@/components/editor/editor-utils";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useFileStore } from "@/store/file-store";
 import { useSettingsStore } from "@/store/settings-store";
+import { useCodeMirrorHandler } from "@/hooks/use-codemirror-handler";
 
 const EditorPanel = dynamic(
   () =>
@@ -107,10 +108,12 @@ export function EditorWorkspace() {
 
   const { customFonts, loadCustomFonts } = useSettingsStore();
   const [fontStylesHtml, setFontStylesHtml] = useState("");
+  const loadFiles = useFileStore((state) => state.loadFiles);
 
   // Load custom fonts on initial mount
   useEffect(() => {
     loadCustomFonts();
+    loadFiles();
   }, []);
 
   // Generate dynamic @font-face style declarations when customFonts state changes
@@ -185,14 +188,14 @@ export function EditorWorkspace() {
   // 1. Hook: Document state & IndexedDB auto-saving
   const { markdown, setMarkdown } = useDocumentPersistence(starterMarkdown);
 
-  // 2. Hook: Monaco editor callbacks & cursor position state
   const {
     editorRef,
     cursorPosition,
     slashMenuState,
-    handleEditorMount,
-    closeSlashMenu
-  } = useMonacoHandler();
+    closeSlashMenu,
+    handleCreateEditor,
+    handleUpdate
+  } = useCodeMirrorHandler();
 
   // 3. Hook: Live markdown compilation
   const { headings, html: previewHtml } = useMarkdownPreview(
@@ -291,11 +294,12 @@ export function EditorWorkspace() {
         <EditorPanel
           markdown={markdown}
           onChange={setMarkdown}
-          onMount={handleEditorMount}
           slashMenuState={slashMenuState}
           slashCommands={slashCommands}
           onSelectSlashCommand={handleSlashCommand}
           onCloseSlashMenu={closeSlashMenu}
+          handleCreateEditor={handleCreateEditor}
+          handleUpdate={handleUpdate}
         />
       ) : viewMode === "preview" ? (
         showTOC ? (
@@ -330,11 +334,12 @@ export function EditorWorkspace() {
             <EditorPanel
               markdown={markdown}
               onChange={setMarkdown}
-              onMount={handleEditorMount}
               slashMenuState={slashMenuState}
               slashCommands={slashCommands}
               onSelectSlashCommand={handleSlashCommand}
               onCloseSlashMenu={closeSlashMenu}
+              handleCreateEditor={handleCreateEditor}
+              handleUpdate={handleUpdate}
             />
           </ResizablePanel>
           <ResizableHandle withHandle />

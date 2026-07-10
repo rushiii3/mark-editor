@@ -10,9 +10,7 @@ import {
   StyleSheet,
   Font,
   Image,
-  Link,
-  Rect,
-  Svg
+  Link
 } from "@react-pdf/renderer";
 import { getImageBlob } from "@/db/image";
 
@@ -191,7 +189,8 @@ const getStyles = (fontFamily: string) =>
       color: "#000000"
     },
     paragraph: {
-      fontFamily
+      fontFamily,
+      paddingBottom: 8
       // marginBottom: 8
     },
     listItem: {
@@ -221,10 +220,8 @@ const getStyles = (fontFamily: string) =>
       fontSize: 9,
       color: "#d63384",
       backgroundColor: "#f3f4f6",
-      paddingHorizontal: 4,
-      paddingVertical: 1.5,
       letterSpacing: 0.2,
-      lineHeight: 1
+      lineHeight: 1.2
     },
     codeBlock: {
       fontFamily: "Courier",
@@ -801,11 +798,6 @@ export function MarkdownPdfDocument({
 
             return renderBlockNode(child, index, styles);
           })}
-          <View
-            render={(e) => {
-              console.log(e.pageNumber);
-            }}
-          ></View>
         </View>
       </Page>
     </Document>
