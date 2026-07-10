@@ -8,7 +8,16 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
-    optimizePackageImports: ["@react-pdf/renderer", "mermaid", "canvg"]
+    optimizePackageImports: [
+      "@react-pdf/renderer",
+      "mermaid",
+      "canvg",
+      "monaco-editor",
+      "@monaco-editor/react",
+      "remark",
+      "remarkGfm",
+      "remarkDirective"
+    ]
   }
 };
 

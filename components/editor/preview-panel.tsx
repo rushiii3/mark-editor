@@ -33,7 +33,7 @@ export const PreviewPanel = memo(function PreviewPanel({
     <section className="flex h-full min-h-80 flex-1 flex-col overflow-hidden bg-white dark:bg-background">
       <div
         // className={previewMode === "pdf" ? "pdf-preview-canvas" : ""}
-        className="overflow-y-scroll"
+        className="flex-1 min-h-0 h-full overflow-y-auto"
       >
         <div
         // className={previewMode === "pdf" ? "pdf-page-stack" : ""}

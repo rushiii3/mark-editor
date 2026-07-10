@@ -1,6 +1,6 @@
 "use client";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 
-import { motion } from "framer-motion";
 import { Card, CardContent } from "../ui/card";
 
 const stats = [
@@ -34,56 +34,40 @@ export function SocialProof() {
   return (
     <section className="relative  py-12  ">
       <div className="mx-auto max-w-7xl px-6 md:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8"
-        >
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.id}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <Card className="bg-card/40">
-                <CardContent className="flex flex-col items-center ">
-                  <span className="text-3xl sm:text-4xl font-extrabold  tracking-tight">
-                    {stat.value}
-                  </span>
-                  <span className="text-sm font-semibold text-amber-500 mt-2">
-                    {stat.label}
-                  </span>
-                  <span className="text-xs text-slate-500 mt-1">
-                    {stat.subtext}
-                  </span>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            // <motion.div
-            //   key={stat.id}
-            //   initial={{ opacity: 0, y: 15 }}
-            //   whileInView={{ opacity: 1, y: 0 }}
-            //   viewport={{ once: true }}
-            //   transition={{ duration: 0.5, delay: index * 0.1 }}
-            //   className="flex flex-col items-center text-center p-4 rounded-xl border border-white/5 bg-background hover:border-white/10 transition-colors duration-200"
-            // >
-            // <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            //   {stat.value}
-            // </span>
-            // <span className="text-sm font-semibold text-amber-500 mt-2">
-            //   {stat.label}
-            // </span>
-            // <span className="text-xs text-slate-500 mt-1">
-            //   {stat.subtext}
-            // </span>
-            // </motion.div>
-          ))}
-        </motion.div>
+        <LazyMotion features={domAnimation}>
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8"
+          >
+            {stats.map((stat, index) => (
+              <LazyMotion features={domAnimation} key={stat.id}>
+                <m.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Card className="bg-card/40">
+                    <CardContent className="flex flex-col items-center ">
+                      <span className="text-3xl sm:text-4xl font-extrabold  tracking-tight">
+                        {stat.value}
+                      </span>
+                      <span className="text-sm font-semibold text-amber-500 mt-2">
+                        {stat.label}
+                      </span>
+                      <span className="text-xs text-foreground/60 mt-1">
+                        {stat.subtext}
+                      </span>
+                    </CardContent>
+                  </Card>
+                </m.div>
+              </LazyMotion>
+            ))}
+          </m.div>
+        </LazyMotion>
       </div>
     </section>
   );

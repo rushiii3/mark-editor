@@ -1,5 +1,5 @@
 "use client";
-
+import "@/lib/monaco";
 import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { type OnMount } from "@monaco-editor/react";
@@ -55,8 +55,6 @@ export function EditorPanel({
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [onCloseSlashMenu, slashMenuState.open]);
 
-  console.log(theme);
-
   return (
     <section
       ref={containerRef}
@@ -82,6 +80,7 @@ export function EditorPanel({
               verticalScrollbarSize: 8,
               horizontalScrollbarSize: 8
             },
+            pasteAs: { enabled: true, showPasteSelector: "afterPaste" },
             padding: { top: 12, bottom: 20 },
             smoothScrolling: true,
             contextmenu: true,
@@ -89,6 +88,8 @@ export function EditorPanel({
             overviewRulerBorder: false,
             renderLineHighlight: "none",
             hideCursorInOverviewRuler: true,
+            accessibilitySupport: "on",
+            copyWithSyntaxHighlighting: false,
             fontFamily:
               'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
           }}

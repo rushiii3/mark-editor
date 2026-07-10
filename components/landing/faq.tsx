@@ -4,7 +4,7 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from "@/components/ui/accordion";
 
 const faqs = [
@@ -38,11 +38,11 @@ export function FAQ() {
   return (
     <section
       id="faq"
-      className="relative py-20 md:py-28 border-t border-white/5 bg-background text-foreground"
+      className="relative py-20 md:py-28 border-t border-foreground/10 bg-background text-foreground"
     >
       <div className="mx-auto max-w-4xl px-6">
         <div className="flex flex-col items-center text-center mb-16">
-          <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
             FAQ
           </span>
           <h3 className="text-3xl sm:text-4xl font-bold tracking-tight mt-3">
@@ -53,7 +53,7 @@ export function FAQ() {
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (
             <AccordionItem key={index} value={`faq-${index}`}>
-              <AccordionTrigger className="text-sm sm:text-base font-bold hover:text-amber-500">
+              <AccordionTrigger className="text-sm sm:text-base font-bold hover:text-primary">
                 {faq.q}
               </AccordionTrigger>
               <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">

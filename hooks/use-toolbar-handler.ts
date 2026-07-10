@@ -112,12 +112,14 @@ export function useToolbarHandler({
 
           const blob = await generateMarkdownPdfBlob(markdown, activeFont);
 
-          console.log(blob);
-          console.log(blob instanceof Blob);
-          console.log(typeof blob);
+          // console.log(blob);
+          // console.log(blob instanceof Blob);
+          // console.log(typeof blob);
           const url = URL.createObjectURL(blob);
+          console.log(url);
           const link = document.createElement("a");
           link.href = url;
+          // link.target = "_black";
           link.download = "document.pdf";
           link.click();
           URL.revokeObjectURL(url);

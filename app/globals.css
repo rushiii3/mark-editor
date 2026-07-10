@@ -414,3 +414,9 @@
   animation: none;
   mix-blend-mode: normal;
 }
+
+/* Performance optimization for large Markdown documents (rendering virtualization) */
+.prose > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100px;
+}

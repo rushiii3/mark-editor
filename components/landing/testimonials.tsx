@@ -1,11 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
+import { LazyMotion, domAnimation, m } from "framer-motion";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const testimonials = [
@@ -34,46 +30,49 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="relative py-20 md:py-28 border-t border-white/5">
+    <section className="relative py-20 md:py-28 border-t border-foreground/10">
       <div className="mx-auto max-w-7xl px-6 md:px-8">
         <div className="flex flex-col items-center text-center mb-16">
-          <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
             Testimonials
           </span>
-          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-3">
+          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight  mt-3">
             Loved by Developers
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {testimonials.map((t, index) => (
-            <motion.div
-              key={t.author}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="flex"
-            >
-              <Card className="flex flex-col justify-between w-full hover:border-white/10 transition-colors duration-250 bg-card/40">
-                <CardContent className="text-sm text-slate-300 leading-relaxed italic pt-6">
-                  &ldquo;{t.quote}&rdquo;
-                </CardContent>
-                <CardFooter className="flex items-center gap-3 border-t border-white/5 pt-4">
-                  <Avatar className="size-9">
-                    <AvatarFallback className="bg-amber-500/10 text-amber-500 font-bold text-xs">
-                      {t.avatar}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <h4 className="text-sm font-bold text-white tracking-tight">
-                      {t.author}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{t.role}</p>
-                  </div>
-                </CardFooter>
-              </Card>
-            </motion.div>
+            <LazyMotion features={domAnimation} key={t.author}>
+              <m.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                className="flex"
+              >
+                <Card className="flex flex-col justify-between w-full hover:border-foreground/10 transition-colors duration-250 bg-card/40">
+                  <CardContent className="text-sm text-foreground/70 leading-relaxed italic">
+                    &ldquo;{t.quote}&rdquo;
+                  </CardContent>
+                  <CardFooter className="flex items-center gap-3 border-t border-foreground/10 pt-4">
+                    <Avatar className="size-9">
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                        {t.avatar}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <h4 className="text-sm font-bold  tracking-tight">
+                        {t.author}
+                      </h4>
+                      <p className="text-[11px] text-foreground/50 mt-0.5">
+                        {t.role}
+                      </p>
+                    </div>
+                  </CardFooter>
+                </Card>
+              </m.div>
+            </LazyMotion>
           ))}
         </div>
       </div>

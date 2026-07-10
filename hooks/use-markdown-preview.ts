@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, startTransition } from "react";
 import type { TocHeading } from "@/components/editor/types";
-import { processMarkdownPreview } from "@/lib/editor/markdown-preview";
 import { useTheme } from "next-themes";
 
 type MarkdownPreviewState = {
@@ -15,6 +14,13 @@ const INITIAL_STATE: MarkdownPreviewState = {
   headings: [],
   html: "<p>Open preview to render this document.</p>",
   isLoading: false
+};
+
+const getDebounceDelay = (length: number) => {
+  if (length < 5000) return 150;      // Under ~1000 words: 150ms
+  if (length < 25000) return 250;     // Under ~5000 words: 250ms
+  if (length < 100000) return 400;    // Under ~20,000 words: 400ms
+  return 750;                         // Large files / 400+ pages: 750ms
 };
 
 export function useMarkdownPreview(
@@ -42,9 +48,13 @@ export function useMarkdownPreview(
     previousKeyRef.current = key;
 
     const requestId = ++requestIdRef.current;
+    const debounceDelay = getDebounceDelay(markdown.length);
 
     const timer = window.setTimeout(async () => {
       try {
+        const { processMarkdownPreview } = await import(
+          "@/lib/editor/markdown-preview"
+        );
         const result = await processMarkdownPreview(
           markdown,
           theme === "dark" ? "dark" : "light"
@@ -73,7 +83,7 @@ export function useMarkdownPreview(
           isLoading: false
         });
       }
-    }, 300);
+    }, debounceDelay);
 
     return () => {
       clearTimeout(timer);

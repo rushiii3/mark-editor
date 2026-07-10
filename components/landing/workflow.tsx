@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 
 const steps = [
   {
@@ -40,39 +40,40 @@ export function Workflow() {
     <section id="workflow" className="relative  py-20 md:py-28 overflow-hidden">
       <div className="mx-auto max-w-7xl px-6 md:px-8">
         <div className="flex flex-col items-center text-center mb-16">
-          <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
             How it Works
           </span>
-          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-3">
+          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight  mt-3">
             Streamlined Document Lifecycles
           </h3>
         </div>
 
         <div className="relative mt-8 grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Horizontal line for desktop layout */}
-          <div className="hidden md:block absolute top-[27px] left-10 right-10 h-0.5 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-transparent -z-10"></div>
+          <div className="hidden md:block absolute top-6.75 left-10 right-10 h-0.5 bg-linear-to-r from-amber-500/20 via-emerald-500/20 to-transparent -z-10"></div>
 
           {steps.map((step, index) => (
-            <motion.div
-              key={step.num}
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="flex flex-col items-center md:items-start text-center md:text-left relative"
-            >
-              {/* Step indicator dot */}
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-[#0F0F0F] text-amber-500 font-bold font-mono text-lg shadow-[0_0_20px_rgba(0,0,0,0.6)] group-hover:border-amber-500 transition-colors duration-200">
-                {step.num}
-              </div>
+            <LazyMotion features={domAnimation} key={step.num}>
+              <m.div
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="flex flex-col items-center md:items-start text-center md:text-left relative"
+              >
+                {/* Step indicator dot */}
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-foreground/10 bg-card text-primary font-bold font-mono text-lg shadow-3xl group-hover:border-amber-500 transition-colors duration-200">
+                  {step.num}
+                </div>
 
-              <h4 className="text-lg font-bold text-white mt-6 tracking-tight">
-                {step.title}
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
-                {step.description}
-              </p>
-            </motion.div>
+                <h4 className="text-lg font-bold  mt-6 tracking-tight">
+                  {step.title}
+                </h4>
+                <p className="text-xs sm:text-sm text-foreground/40 mt-2 leading-relaxed">
+                  {step.description}
+                </p>
+              </m.div>
+            </LazyMotion>
           ))}
         </div>
       </div>

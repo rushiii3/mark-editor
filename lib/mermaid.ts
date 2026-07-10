@@ -1,9 +1,8 @@
-import mermaid from "mermaid";
-import { Canvg } from "canvg";
+import type { Mermaid } from "mermaid";
 
 let initialized = false;
 
-function initMermaid() {
+function initMermaid(mermaid: Mermaid) {
   if (initialized) return;
 
   mermaid.initialize({
@@ -39,11 +38,15 @@ export async function mermaidToPng(
   code: string,
   { scale = 2, backgroundColor = "#ffffff" }: MermaidToPngOptions = {}
 ): Promise<string> {
+  const [{ default: mermaid }, { Canvg }] = await Promise.all([
+    import("mermaid"),
+    import("canvg")
+  ]);
   if (typeof window === "undefined" || typeof document === "undefined") {
     return "";
   }
 
-  initMermaid();
+  initMermaid(mermaid);
 
   const id = `mermaid-${crypto.randomUUID()}`;
 
@@ -164,7 +167,7 @@ export async function mermaidToPng(
       }
     };
 
-    img.onerror = async (err) => {
+    img.onerror = async (_err) => {
       URL.revokeObjectURL(url);
       console.warn("Native SVG image load failed, falling back to Canvg");
       try {

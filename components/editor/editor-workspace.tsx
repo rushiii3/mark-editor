@@ -286,7 +286,7 @@ export function EditorWorkspace() {
   const showTOC = !isMobile && !isTablet;
 
   const contentPane = (
-    <div className="h-[calc(100vh-155px)]">
+    <div className="h-[calc(100dvh-155px)]">
       {viewMode === "write" ? (
         <EditorPanel
           markdown={markdown}
@@ -406,17 +406,19 @@ export function EditorWorkspace() {
 
       <Separator />
 
-      <footer className=" min-h-9 items-center gap-6 overflow-x-auto px-4 text-sm text-muted-foreground md:flex hidden">
-        <span>Words: {words}</span>
-        <span>Chars: {chars}</span>
-        <span>Reading: {readingMinutes} min</span>
-        <span>Wrap: On</span>
-        <span>
+      <footer className="min-h-9 items-center gap-6 overflow-x-auto px-4 text-sm text-muted-foreground flex ">
+        <span className="text-nowrap">Words: {words}</span>
+        <span className="text-nowrap">Chars: {chars}</span>
+        <span className="text-nowrap">Reading: {readingMinutes} min</span>
+        <span className="text-nowrap">Wrap: On</span>
+        <span className="text-nowrap">
           Ln {cursorPosition.line}, Col {cursorPosition.column}
         </span>
-        <span className="ml-auto text-emerald-600">All changes saved</span>
-        <span>UTF-8</span>
-        <span>Markdown</span>
+        <span className="ml-auto text-emerald-600 text-nowrap">
+          All changes saved
+        </span>
+        <span className="text-nowrap">UTF-8</span>
+        <span className="text-nowrap">Markdown</span>
       </footer>
     </main>
   );

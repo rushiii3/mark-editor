@@ -1,7 +1,27 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Check } from "@hugeicons/core-free-icons";
+
+const whyOpenSource = [
+  {
+    title: "Full Privacy Audit",
+    description:
+      "Anyone can inspect the code to verify that no documents or analytics are transmitted to remote servers."
+  },
+  {
+    title: "No Vendor Lock-in",
+    description:
+      "Your data is stored in standard Markdown and IndexedDB structures. Export your notes in bulk at any moment."
+  },
+  {
+    title: "Community Driven Development",
+    description:
+      "Found a bug? Want a feature? Fork the repository and open a pull request. We actively review contributions."
+  }
+];
 
 export function WhyOpenSource() {
   return (
@@ -12,153 +32,131 @@ export function WhyOpenSource() {
       <div className="mx-auto max-w-7xl px-6 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Copy Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-              MIT Licensed
-            </span>
-            <h3 className="text-3xl sm:text-4xl font-bold tracking-tight  mt-3 leading-tight">
-              Why Open Source & Local-First?
-            </h3>
-            <p className="text-slate-400 mt-6 leading-relaxed">
-              We believe developers deserve tools that respect their
-              independence. Manus runs entirely in your browser’s sandbox, using
-              your local storage as a database.
-            </p>
+          <LazyMotion features={domAnimation}>
+            <m.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+                MIT Licensed
+              </span>
+              <h3 className="text-3xl sm:text-4xl font-bold tracking-tight  mt-3 leading-tight">
+                Why Open Source & Local-First?
+              </h3>
+              <p className="text-foreground/60 mt-6 leading-relaxed">
+                We believe developers deserve tools that respect their
+                independence. Manus runs entirely in your browser’s sandbox,
+                using your local storage as a database.
+              </p>
 
-            <div className="mt-8 space-y-6">
-              <div className="flex gap-4">
-                <div className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-                  ✓
-                </div>
-                <div>
-                  <h4 className="text-base font-semibold ">
-                    Full Privacy Audit
-                  </h4>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Anyone can inspect the code to verify that no documents or
-                    analytics are transmitted to remote servers.
-                  </p>
-                </div>
+              <div className="mt-8 space-y-6">
+                {whyOpenSource.map((item, index) => (
+                  <div className="flex gap-4" key={index}>
+                    <div className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                      <HugeiconsIcon icon={Check} />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-semibold ">{item.title}</h4>
+                      <p className="text-sm text-foreground/50 mt-1">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-                  ✓
-                </div>
-                <div>
-                  <h4 className="text-base font-semibold ">
-                    No Vendor Lock-in
-                  </h4>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Your data is stored in standard Markdown and
-                    SQLite/IndexedDB structures. Export your notes in bulk at
-                    any moment.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-                  ✓
-                </div>
-                <div>
-                  <h4 className="text-base font-semibold ">
-                    Community Driven Development
-                  </h4>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Found a bug? Want a feature? Fork the repository and open a
-                    pull request. We actively review contributions.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            </m.div>
+          </LazyMotion>
 
           {/* Interactive Inspect Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="flex w-full animate-in fade-in duration-300"
-          >
-            <Card className="w-full bg-card/40 border-white/10 hover:border-white/20 transition-all duration-300">
-              <CardHeader className="border-b border-white/5 py-3 px-4">
-                <CardTitle className="text-xs text-muted-foreground font-mono font-normal tracking-wide">
-                  DevTools &gt; Application &gt; IndexedDB
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4 font-mono text-[11px] sm:text-xs text-slate-400 leading-relaxed overflow-x-auto">
-                <div className="text-slate-600">
-                  {"// Document storage inspect"}
-                </div>
-                <div>
-                  <span className="text-emerald-500">IndexedDB</span>.open(
-                  <span className="text-amber-500">
-                    &quot;markdown-editor&quot;
-                  </span>
-                  , <span className="text-blue-400">2</span>)
-                </div>
-                <div className="pl-4">
-                  .onUpgrade(<span className="text-purple-400">db</span> =&gt;
-                  &#123;
-                </div>
-                <div className="pl-8">
-                  db.createObjectStore(
-                  <span className="text-amber-500">&quot;documents&quot;</span>,
-                  &#123; keyPath:{" "}
-                  <span className="text-amber-500">&quot;id&quot;</span> &#125;)
-                </div>
-                <div className="pl-8 text-slate-500">
-                  {"// Index files by date for fast loading"}
-                </div>
-                <div className="pl-8">
-                  store.createIndex(
-                  <span className="text-amber-500">
-                    &quot;by-createdAt&quot;
-                  </span>
-                  ,{" "}
-                  <span className="text-amber-500">&quot;createdAt&quot;</span>)
-                </div>
-                <div className="pl-4">&#125;)</div>
+          <LazyMotion features={domAnimation}>
+            <m.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="flex w-full animate-in fade-in duration-300"
+            >
+              <Card className="w-full bg-card/40 border-white/10 hover:border-white/20 transition-all duration-300">
+                <CardHeader className="border-b border-white/5 py-3 px-4">
+                  <CardTitle className="text-xs text-muted-foreground font-mono font-normal tracking-wide">
+                    DevTools &gt; Application &gt; IndexedDB
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 font-mono text-[11px] sm:text-xs text-slate-400 leading-relaxed overflow-x-auto">
+                  <div className="text-slate-600">
+                    {"// Document storage inspect"}
+                  </div>
+                  <div>
+                    <span className="text-emerald-500">IndexedDB</span>.open(
+                    <span className="text-amber-500">
+                      &quot;markdown-editor&quot;
+                    </span>
+                    , <span className="text-blue-400">2</span>)
+                  </div>
+                  <div className="pl-4">
+                    .onUpgrade(<span className="text-purple-400">db</span> =&gt;
+                    &#123;
+                  </div>
+                  <div className="pl-8">
+                    db.createObjectStore(
+                    <span className="text-amber-500">
+                      &quot;documents&quot;
+                    </span>
+                    , &#123; keyPath:{" "}
+                    <span className="text-amber-500">&quot;id&quot;</span>{" "}
+                    &#125;)
+                  </div>
+                  <div className="pl-8 text-slate-500">
+                    {"// Index files by date for fast loading"}
+                  </div>
+                  <div className="pl-8">
+                    store.createIndex(
+                    <span className="text-amber-500">
+                      &quot;by-createdAt&quot;
+                    </span>
+                    ,{" "}
+                    <span className="text-amber-500">
+                      &quot;createdAt&quot;
+                    </span>
+                    )
+                  </div>
+                  <div className="pl-4">&#125;)</div>
 
-                <div className="border-t border-white/5 pt-3 mt-3">
-                  <span className="text-slate-600">
-                    {"// Active DB Schema Value"}
-                  </span>
-                </div>
-                <div className="bg-[#0A0A0A] p-3 rounded-lg border border-white/5 space-y-1 text-slate-300">
-                  <div>&#123;</div>
-                  <div className="pl-4">
-                    <span className="text-amber-500">id</span>:
-                    &quot;69e13455-e138-4f26-aa16-9b689260f202&quot;,
+                  <div className="border-t border-white/5 pt-3 mt-3">
+                    <span className="text-slate-600">
+                      {"// Active DB Schema Value"}
+                    </span>
                   </div>
-                  <div className="pl-4">
-                    <span className="text-amber-500">name</span>:
-                    &quot;Untitled.md&quot;,
+                  <div className="bg-[#0A0A0A] p-3 rounded-lg border border-white/5 space-y-1 text-slate-300">
+                    <div>&#123;</div>
+                    <div className="pl-4">
+                      <span className="text-amber-500">id</span>:
+                      &quot;69e13455-e138-4f26-aa16-9b689260f202&quot;,
+                    </div>
+                    <div className="pl-4">
+                      <span className="text-amber-500">name</span>:
+                      &quot;Untitled.md&quot;,
+                    </div>
+                    <div className="pl-4">
+                      <span className="text-amber-500">content</span>: &quot;#
+                      Welcome to Manus...&quot;,
+                    </div>
+                    <div className="pl-4">
+                      <span className="text-amber-500">createdAt</span>:
+                      1718582400000,
+                    </div>
+                    <div className="pl-4">
+                      <span className="text-amber-500">updatedAt</span>:
+                      1718582400500
+                    </div>
+                    <div>&#125;</div>
                   </div>
-                  <div className="pl-4">
-                    <span className="text-amber-500">content</span>: &quot;#
-                    Welcome to Manus...&quot;,
-                  </div>
-                  <div className="pl-4">
-                    <span className="text-amber-500">createdAt</span>:
-                    1718582400000,
-                  </div>
-                  <div className="pl-4">
-                    <span className="text-amber-500">updatedAt</span>:
-                    1718582400500
-                  </div>
-                  <div>&#125;</div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                </CardContent>
+              </Card>
+            </m.div>
+          </LazyMotion>
         </div>
       </div>
     </section>

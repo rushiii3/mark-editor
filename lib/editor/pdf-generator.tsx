@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 import React from "react";
+
 import {
   Document,
   Page,
@@ -8,14 +10,12 @@ import {
   StyleSheet,
   Font,
   Image,
-  Link
+  Link,
+  Rect,
+  Svg
 } from "@react-pdf/renderer";
-import { remark } from "remark";
-import remarkGfm from "remark-gfm";
-import remarkDirective from "remark-directive";
-import { emojify } from "node-emoji";
 import { getImageBlob } from "@/db/image";
-import { mermaidToPng } from "@/lib/mermaid";
+
 // Register Google Font Inter
 Font.register({
   family: "Inter",
@@ -48,13 +48,12 @@ Font.registerEmojiSource({
   url: "/emoji/"
 });
 
-async function resolveEmoji(node: AstNode) {
+function resolveEmoji(node: AstNode, emojifyFn: (s: string) => string) {
   if (typeof node.value === "string") {
-    console.log(emojify(node.value));
-    node.value = emojify(node.value);
+    node.value = emojifyFn(node.value);
   }
   if (node.children) {
-    node.children.forEach(resolveEmoji);
+    node.children.forEach((child) => resolveEmoji(child, emojifyFn));
   }
 }
 
@@ -114,6 +113,7 @@ async function renderMermaidDiagrams(node: AstNode) {
       const metaCaption = extractCaptionFromMeta(node.meta);
       const caption = metaCaption ?? frontmatterResult.caption ?? "";
 
+      const { mermaidToPng } = await import("@/lib/mermaid");
       const png = await mermaidToPng(cleanValue);
 
       node.type = "image";
@@ -191,8 +191,8 @@ const getStyles = (fontFamily: string) =>
       color: "#000000"
     },
     paragraph: {
-      fontFamily,
-      marginBottom: 8
+      fontFamily
+      // marginBottom: 8
     },
     listItem: {
       fontFamily,
@@ -218,31 +218,35 @@ const getStyles = (fontFamily: string) =>
     },
     inlineCode: {
       fontFamily: "Courier",
-      backgroundColor: "#F3F4F6",
-      color: "#1F2937",
-      paddingTop: 2,
-      paddingBottom: 2,
-      paddingLeft: 4,
-      paddingRight: 4,
-      borderRadius: 3
+      fontSize: 9,
+      color: "#d63384",
+      backgroundColor: "#f3f4f6",
+      paddingHorizontal: 4,
+      paddingVertical: 1.5,
+      letterSpacing: 0.2,
+      lineHeight: 1
     },
     codeBlock: {
       fontFamily: "Courier",
-      backgroundColor: "#0F172A",
-      color: "#F8FAFC",
-      padding: 10,
+      // backgroundColor: "#0F172A",
+      backgroundColor: "#F3F4F6",
+      // color: "#F8FAFC",
+      color: "#1F2937",
+      paddingTop: 6,
+      paddingHorizontal: 6,
       borderRadius: 6,
       marginBottom: 8,
       fontSize: 9
     },
     blockquote: {
       fontFamily,
-      borderLeftWidth: 3,
+      borderLeftWidth: 2,
       borderLeftColor: "#D1D5DB",
       paddingLeft: 10,
       marginBottom: 8,
       color: "#4B5563",
-      fontStyle: "italic"
+      fontStyle: "italic",
+      paddingTop: 4
     },
     table: {
       fontFamily,
@@ -273,7 +277,8 @@ const getStyles = (fontFamily: string) =>
       fontFamily,
       fontWeight: "bold",
       backgroundColor: "#F9FAFB",
-      color: "#111827"
+      color: "#111827",
+      lineHeight: 1
     },
     callout: {
       fontFamily,
@@ -447,9 +452,10 @@ function renderInlineNode(
         </Text>
       );
     case "inlineCode":
+      console.log("inline code: ", node.value);
       return (
-        <Text key={index} style={styles.inlineCode}>
-          {node.value}
+        <Text style={styles.inlineCode} key={index}>
+          {node.value}test
         </Text>
       );
     case "link":
@@ -562,9 +568,13 @@ function renderBlockNode(
       );
     case "table":
       return (
-        <View key={index} style={styles.table} break={node.break}>
+        <View
+          key={index}
+          style={styles.table}
+          // break={node.br/eak}
+        >
           {node.children?.map((row: AstNode, rowIndex: number) => (
-            <View key={rowIndex} style={styles.tableRow}>
+            <View key={rowIndex} style={styles.tableRow} wrap={false}>
               {row.children?.map((cell: AstNode, cellIndex: number) => {
                 const isHeader = rowIndex === 0;
                 return (
@@ -575,6 +585,7 @@ function renderBlockNode(
                         ? [styles.tableCell, styles.tableHeaderCell]
                         : styles.tableCell
                     }
+                    wrap={false}
                   >
                     <Text style={{ fontFamily: styles.page.fontFamily }}>
                       {renderChildren(cell.children, styles)}
@@ -760,8 +771,27 @@ export function MarkdownPdfDocument({
   const styles = getStyles(activeFont);
 
   return (
-    <Document>
-      <Page size="A4" style={[styles.page, { fontFamily: activeFont }]}>
+    <Document
+      title="This is a sample"
+      author="Manus MD Editor"
+      subject="This is a sample subject"
+      permissions={{
+        contentAccessibility: true,
+        printing: "highResolution",
+        modifying: false
+      }}
+      producer="Manus MarkDown Editor"
+      // pageMode=""
+      pdfVersion="1.7"
+      language="English"
+    >
+      <Page
+        wrap={true}
+        size="A4"
+        style={[styles.page, { fontFamily: activeFont }]}
+        orientation="portrait"
+        fixed={true}
+      >
         <View>
           {/* {ast.children?.map((child: AstNode, index: number) =>
             renderBlockNode(child, index)
@@ -771,6 +801,11 @@ export function MarkdownPdfDocument({
 
             return renderBlockNode(child, index, styles);
           })}
+          <View
+            render={(e) => {
+              console.log(e.pageNumber);
+            }}
+          ></View>
         </View>
       </Page>
     </Document>
@@ -781,6 +816,18 @@ export async function generateMarkdownPdfBlob(
   markdown: string,
   activeFont: string = "Inter"
 ): Promise<Blob> {
+  const [
+    { remark },
+    { default: remarkGfm },
+    { default: remarkDirective },
+    { emojify }
+  ] = await Promise.all([
+    import("remark"),
+    import("remark-gfm"),
+    import("remark-directive"),
+    import("node-emoji")
+  ]);
+
   const processor = remark()
     .use(remarkGfm)
     // .use(remarkEmoji)
@@ -796,7 +843,7 @@ export async function generateMarkdownPdfBlob(
 
   await renderMermaidDiagrams(ast);
 
-  await resolveEmoji(ast);
+  resolveEmoji(ast, emojify);
 
   // Register custom user-uploaded fonts dynamically
   if (
