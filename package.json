@@ -10,7 +10,7 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "lint": "eslint",
-    "postinstall": "node copy-emojis.js copy-monaco.js"
+    "postinstall": "node copy-emojis.js"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.5.0",

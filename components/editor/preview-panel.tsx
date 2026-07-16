@@ -61,7 +61,7 @@ export const PreviewPanel = memo(function PreviewPanel({
           <div
             ref={previewRef}
             style={{ fontFamily: getFontFamilyStyle() }}
-            className={`mx-auto min-h-full prose prose-neutral prose-base dark:prose-invert
+            className={`mx-auto max-w-full min-h-full prose prose-neutral prose-base dark:prose-invert
 prose-hr:mt-1 prose-hr:mb-3
 prose-code:before:content-none prose-code:after:content-none 
 prose-code:px-1 prose-code:py-0.5 prose-code:rounded

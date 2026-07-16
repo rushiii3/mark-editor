@@ -9,8 +9,11 @@ import {
   CheckListIcon,
   ChevronDown,
   CodeIcon,
+  Eye,
+  EyeOff,
   FileAddFreeIcons,
   FileCode,
+  FileDownloadIcon,
   FileExportIcon,
   FullScreenIcon,
   GalleryThumbnailsFreeIcons,
@@ -21,13 +24,17 @@ import {
   Heading5,
   Heading6,
   HelpCircleFreeIcons,
+  Hidden,
   HistoryFreeIcons,
+  HtmlFile01Icon,
   IdeaIcon,
   ImageUploadFreeIcons,
   LeftToRightListBulletIcon,
   LeftToRightListNumberIcon,
   LeftToRightListTriangleIcon,
+  LineFreeIcons,
   Link01FreeIcons,
+  Pdf01Icon,
   Quote,
   Settings05Icon,
   SolidLine01Icon,
@@ -76,6 +83,7 @@ import { ImageForm } from "./forms/image-form";
 import { ImageGallery } from "./image-gallery";
 import { useImageStore } from "@/store/imageStore";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+import { useSettingsStore } from "@/store/settings-store";
 
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
@@ -107,7 +115,12 @@ const FORMATTING_ACTIONS: IconAction[] = [
     icon: TextStrikethroughIcon,
     label: "Strikethrough"
   },
-  { action: "hr", icon: SolidLine01Icon, label: "Horizontal Rule" }
+  { action: "hr", icon: SolidLine01Icon, label: "Horizontal Rule" },
+  {
+    action: "lb",
+    icon: LineFreeIcons,
+    label: "Line Break"
+  }
 ];
 
 const CODE_ACTIONS: IconAction[] = [
@@ -240,112 +253,132 @@ export const Toolbar = memo(function Toolbar({
   const isTablet = useIsTablet();
   const isDrawer = isMobile || isTablet;
 
+  const { showHeader, toggleHeader } = useSettingsStore();
+
   return (
     <header className="border-b bg-background">
-      <div className="flex min-h-15 items-center gap-3 px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-            M
-          </div>
-          <div className="text-[2rem] font-semibold tracking-tight text-foreground">
-            Manus
-          </div>
-        </div>
+      {showHeader && (
+        <>
+          <div className="flex min-h-15 items-center gap-3 px-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
+                M
+              </div>
+              <div className="text-[2rem] font-semibold tracking-tight text-foreground">
+                Manus
+              </div>
+            </div>
 
-        <ToggleGroup
-          type="single"
-          value={topMode}
-          onValueChange={(value) => {
-            if (
-              value === "write" ||
-              value === "split" ||
-              value === "preview"
-              // value === "pdf"
-            ) {
-              onViewModeChange(value);
-            }
-          }}
-          variant="outline"
-          size="lg"
-          className="p-1"
-        >
-          <ToggleGroupItem value="write" size="lg">
-            Write
-          </ToggleGroupItem>
+            <ToggleGroup
+              type="single"
+              value={topMode}
+              onValueChange={(value) => {
+                if (
+                  value === "write" ||
+                  value === "split" ||
+                  value === "preview"
+                  // value === "pdf"
+                ) {
+                  onViewModeChange(value);
+                }
+              }}
+              variant="outline"
+              size="lg"
+              className="p-1"
+            >
+              <ToggleGroupItem value="write" size="lg">
+                Write
+              </ToggleGroupItem>
 
-          {!isMobile && (
-            <ToggleGroupItem value="split" size="lg">
-              Split
-            </ToggleGroupItem>
-          )}
+              {!isMobile && (
+                <ToggleGroupItem value="split" size="lg">
+                  Split
+                </ToggleGroupItem>
+              )}
 
-          <ToggleGroupItem value="preview" size="lg">
-            Preview
-          </ToggleGroupItem>
-        </ToggleGroup>
+              <ToggleGroupItem value="preview" size="lg">
+                Preview
+              </ToggleGroupItem>
+            </ToggleGroup>
 
-        <div className="ml-auto hidden items-center gap-1 lg:flex">
-          <Button variant="ghost" size="lg">
-            <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
-            Help
-          </Button>
-          <Button variant="ghost" size="lg" onClick={onToggleTheme}>
-            <HugeiconsIcon
-              icon={Sun01Icon}
-              size={16}
-              data-icon="inline-start"
-            />
-            Theme
-          </Button>
-          <Button variant="ghost" size="lg" onClick={() => setSettingsOpen(true)}>
-            <HugeiconsIcon
-              icon={Settings05Icon}
-              size={16}
-              data-icon="inline-start"
-            />
-            Settings
-          </Button>
-          <Button variant="outline" size="lg" onClick={toggleFullScreen}>
-            <HugeiconsIcon
-              icon={FullScreenIcon}
-              size={16}
-              data-icon="inline-start"
-            />
-            Fullscreen
-          </Button>
-        </div>
-
-        {/* Mobile/Tablet Menu */}
-        <div className="ml-auto flex items-center gap-1 lg:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl">
-                <HugeiconsIcon icon={Settings05Icon} size={18} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onToggleTheme} className="gap-2">
-                <HugeiconsIcon icon={Sun01Icon} size={16} />
-                <span>Toggle Theme</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
+            <div className="ml-auto hidden items-center gap-1 lg:flex">
+              <Button variant="ghost" size="lg">
                 <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
-                <span>Help</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="gap-2 cursor-pointer">
-                <HugeiconsIcon icon={Settings05Icon} size={16} />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={toggleFullScreen} className="gap-2">
-                <HugeiconsIcon icon={FullScreenIcon} size={16} />
-                <span>Fullscreen</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+                Help
+              </Button>
+              <Button variant="ghost" size="lg" onClick={onToggleTheme}>
+                <HugeiconsIcon
+                  icon={Sun01Icon}
+                  size={16}
+                  data-icon="inline-start"
+                />
+                Theme
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <HugeiconsIcon
+                  icon={Settings05Icon}
+                  size={16}
+                  data-icon="inline-start"
+                />
+                Settings
+              </Button>
+              <Button variant="outline" size="lg" onClick={toggleFullScreen}>
+                <HugeiconsIcon
+                  icon={FullScreenIcon}
+                  size={16}
+                  data-icon="inline-start"
+                />
+                Fullscreen
+              </Button>
+            </div>
 
-      <Separator />
+            {/* Mobile/Tablet Menu */}
+            <div className="ml-auto flex items-center gap-1 lg:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl"
+                  >
+                    <HugeiconsIcon icon={Settings05Icon} size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={onToggleTheme} className="gap-2">
+                    <HugeiconsIcon icon={Sun01Icon} size={16} />
+                    <span>Toggle Theme</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="gap-2">
+                    <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
+                    <span>Help</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setSettingsOpen(true)}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <HugeiconsIcon icon={Settings05Icon} size={16} />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={toggleFullScreen}
+                    className="gap-2"
+                  >
+                    <HugeiconsIcon icon={FullScreenIcon} size={16} />
+                    <span>Fullscreen</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <Separator />
+        </>
+      )}
 
       <div className="flex min-h-14 items-center justify-between overflow-x-auto px-4">
         <div className="flex min-w-max items-center rounded-md border border-border/80 bg-background px-2 py-1 shadow-sm">
@@ -485,6 +518,17 @@ export const Toolbar = memo(function Toolbar({
         </div>
 
         <div className="flex min-w-max items-center gap-2 px-2 py-1">
+          <ToolTipWrapper label={showHeader ? "Hide Header" : "Reveal Header"}>
+            <Button
+              type="button"
+              size="lg"
+              variant={"ghost"}
+              onClick={toggleHeader}
+            >
+              <HugeiconsIcon icon={showHeader ? EyeOff : Eye} size={16} />
+              {showHeader ? "Hide" : "Reveal"}
+            </Button>
+          </ToolTipWrapper>
           <Dialog>
             <DialogTrigger asChild>
               <Button size="lg" variant={"ghost"}>
@@ -524,16 +568,37 @@ export const Toolbar = memo(function Toolbar({
               History
             </Button>
           </ToolTipWrapper>
-          <ToolTipWrapper label="Export PDF">
-            <Button
-              type="button"
-              size="lg"
-              onClick={() => onAction("export-pdf")}
-            >
-              <HugeiconsIcon icon={FileExportIcon} size={16} />
-              Export
-            </Button>
-          </ToolTipWrapper>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" size="lg">
+                <HugeiconsIcon icon={FileExportIcon} size={18} /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => onAction("export-pdf")}
+                className="gap-2"
+              >
+                <HugeiconsIcon icon={Pdf01Icon} size={16} />
+                <span>Export as PDF</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onAction("export-html")}
+                className="gap-2"
+              >
+                <HugeiconsIcon icon={HtmlFile01Icon} size={16} />
+                <span>Export as HTML</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onAction("export-md")}
+                className="gap-2 cursor-pointer"
+              >
+                <HugeiconsIcon icon={FileDownloadIcon} size={16} />
+                <span>Export as MD</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

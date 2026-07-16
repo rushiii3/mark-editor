@@ -161,7 +161,7 @@ export default function remarkCustomDirectives() {
         node.data = {
           hName: "div",
           hProperties: {
-            className: `my-4 overflow-hidden border-l-4 ${style.border} ${style.bg}`
+            className: `my-4 overflow-hidden border-l-4 ${style.border} ${style.bg} text-black`
           }
         };
 

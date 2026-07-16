@@ -6,6 +6,8 @@ interface SettingsState {
   customFonts: string[];
   setActiveFont: (font: string) => void;
   loadCustomFonts: () => Promise<void>;
+  showHeader: boolean;
+  toggleHeader: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -14,6 +16,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       ? localStorage.getItem("manus-active-font") || "Inter"
       : "Inter",
   customFonts: [],
+  showHeader: true,
 
   setActiveFont: (font: string) => {
     if (typeof window !== "undefined") {
@@ -30,5 +33,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     } catch (err) {
       console.error("Failed to load custom fonts from DB:", err);
     }
+  },
+
+  toggleHeader: async () => {
+    set((state) => ({
+      showHeader: !state.showHeader
+    }));
   }
 }));

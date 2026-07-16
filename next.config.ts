@@ -12,8 +12,6 @@ const nextConfig: NextConfig = {
       "@react-pdf/renderer",
       "mermaid",
       "canvg",
-      "monaco-editor",
-      "@monaco-editor/react",
       "remark",
       "remarkGfm",
       "remarkDirective"

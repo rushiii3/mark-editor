@@ -147,6 +147,7 @@ interface AstNode {
     directiveLabel?: boolean;
     [key: string]: unknown;
   };
+  style: any;
   children?: AstNode[];
 }
 
@@ -367,17 +368,12 @@ async function convertWebpImagesToPng(node: AstNode) {
     try {
       const pngUrl = await webpToPng(node.url);
       node.url = pngUrl;
-      console.log(
-        "Converted webp image to png for PDF:",
-        node.url.substring(0, 50)
-      );
     } catch (error) {
       console.error(
         "Failed to convert webp image to png for PDF:",
         node.url,
         error
       );
-      // Keep original url as fallback
     }
   }
 
@@ -449,7 +445,7 @@ function renderInlineNode(
         </Text>
       );
     case "inlineCode":
-      console.log("inline code: ", node.value);
+      // console.log("inline code: ", node.value);
       return (
         <Text style={styles.inlineCode} key={index}>
           {node.value}test
@@ -481,13 +477,12 @@ function renderBlockNode(
   index: number,
   styles: any
 ): React.ReactNode {
-  console.log("Node type:", node.type, node);
   switch (node.type) {
     case "heading": {
       const headingStyle =
         node.depth === 1 ? styles.h1 : node.depth === 2 ? styles.h2 : styles.h3;
       return (
-        <Text key={index} style={headingStyle} break={node.break}>
+        <Text key={index} style={[headingStyle, node.style]} break={node.break}>
           {renderChildren(node.children, styles)}
         </Text>
       );
@@ -512,9 +507,8 @@ function renderBlockNode(
           </View>
         );
       }
-
       return (
-        <Text key={index} style={styles.paragraph}>
+        <Text key={index} style={[styles.paragraph, node.style]}>
           {renderChildren(node.children, styles)}
         </Text>
       );
@@ -731,6 +725,18 @@ function renderBlockNode(
           </View>
         );
       }
+      if (
+        node.name === "justify" ||
+        node.name === "left" ||
+        node.name === "right" ||
+        node.name === "center"
+      ) {
+        {
+          node.children?.map((child) => {
+            return (child.style = { textAlign: node.name });
+          });
+        }
+      }
       return (
         <View key={index}>
           {node.children?.map((child, idx) =>
@@ -742,6 +748,18 @@ function renderBlockNode(
     case "leafDirective": {
       if (node.name === "pagebreak" || node.name === "page-break") {
         return <View key={index} break />;
+      }
+      if (node.name === "linebreak" || node.name === "line-break") {
+        console.log(node);
+        return (
+          <View
+            key={index}
+            style={{
+              marginVertical: 10
+            }}
+            break={node.break}
+          />
+        );
       }
       return null;
     }
@@ -761,7 +779,7 @@ interface MarkdownPdfDocumentProps {
   activeFont?: string;
 }
 
-export function MarkdownPdfDocument({
+function MarkdownPdfDocument({
   ast,
   activeFont = "Inter"
 }: MarkdownPdfDocumentProps) {
@@ -794,7 +812,7 @@ export function MarkdownPdfDocument({
             renderBlockNode(child, index)
           )} */}
           {ast.children?.map((child, index) => {
-            console.log(index, child.type, child.children?.length);
+            // console.log(index, child.type, child.children?.length);
 
             return renderBlockNode(child, index, styles);
           })}
@@ -825,7 +843,7 @@ export async function generateMarkdownPdfBlob(
     // .use(remarkEmoji)
     .use(remarkDirective);
   const ast = processor.parse(markdown) as unknown as AstNode;
-  console.log(ast);
+  // console.log(ast);
 
   // Resolve local image Blobs asynchronously from IndexedDB before rendering
   await resolveAstLocalImages(ast);
@@ -836,6 +854,8 @@ export async function generateMarkdownPdfBlob(
   await renderMermaidDiagrams(ast);
 
   resolveEmoji(ast, emojify);
+
+  // await TextAlignment(ast);
 
   // Register custom user-uploaded fonts dynamically
   if (
@@ -912,6 +932,6 @@ export async function generateMarkdownPdfBlob(
   const resolvedPdf = await pdf(
     <MarkdownPdfDocument ast={ast} activeFont={activeFont} />
   ).toBlob();
-  console.log(resolvedPdf);
+  // console.log(resolvedPdf);
   return resolvedPdf;
 }

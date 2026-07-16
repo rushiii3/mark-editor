@@ -15,26 +15,35 @@ As a contributor, you agree to foster an open, welcoming, and inclusive communit
 ## Development Setup
 
 ### 1. Pruning & Installation
-Make sure you are using `pnpm` as the package manager. To setup the project:
+Ensure you are using `pnpm`, `npm`, or `yarn` as the package manager. To setup the project:
 ```bash
 # Install dependencies
-pnpm install
+pnpm install # or 'npm install' or 'yarn install'
 ```
 
-### 2. Running Local Dev Server
+### 2. Running Local Dev Server (Web)
 ```bash
-pnpm run dev
+pnpm run dev # or 'npm run dev' or 'yarn dev'
 ```
-Open `http://localhost:3000` to preview your changes.
+Open `http://localhost:3000` to preview your changes (use `http://localhost:3000/editor` to access the editor workspace).
 
-### 3. Verification Before Submitting
-Before opening a Pull Request, ensure that all linting and compile steps pass successfully:
+### 3. Running Local Desktop Client (Tauri)
+To develop and run the application as a native desktop client:
+```bash
+pnpm run tauri:dev # or 'npm run tauri:dev' or 'yarn tauri:dev'
+```
+
+### 4. Verification Before Submitting
+Before opening a Pull Request, ensure that all linting, type-checking, and build steps pass successfully:
 ```bash
 # Check formatting and lint rules
-pnpm run lint
+pnpm run lint # or 'npm run lint' or 'yarn lint'
 
 # Verify typescript compilation and next build
-pnpm run build
+pnpm run build # or 'npm run build' or 'yarn build'
+
+# Verify Tauri build (if you modified desktop/Tauri configurations)
+pnpm run tauri:build # or 'npm run tauri:build' or 'yarn tauri:build'
 ```
 
 ---

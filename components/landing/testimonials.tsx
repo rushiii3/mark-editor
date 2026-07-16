@@ -14,7 +14,7 @@ const testimonials = [
   },
   {
     quote:
-      "Writing documents in Monaco with full autocomplete and custom slash commands is incredibly fast. Highly responsive UI with zero lag, and the open-source MIT license means I can trust it.",
+      "Writing documents in CodeMirror with custom slash commands is incredibly fast. Highly responsive UI with zero lag, and the open-source MIT license means I can trust it.",
     author: "Elena Rostova",
     role: "Fullstack Developer",
     avatar: "ER"

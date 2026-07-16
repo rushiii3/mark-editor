@@ -13,7 +13,7 @@ const steps = [
     num: "02",
     title: "Write",
     description:
-      "Draft documents using Monaco's core formatting shortcuts, syntax highlighting, and live rendering."
+      "Draft documents using CodeMirror's syntax highlighting, editor commands, and live rendering."
   },
   {
     num: "03",

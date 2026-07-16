@@ -1,10 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 // import { EditorView } from "@codemirror/view";
-import {
-  Transaction,
-  ViewUpdate,
-  type EditorView
-} from "@uiw/react-codemirror";
+import { ViewUpdate, type EditorView } from "@uiw/react-codemirror";
 
 export function useCodeMirrorHandler() {
   const editorRef = useRef<EditorView | null>(null);
@@ -32,6 +28,7 @@ export function useCodeMirrorHandler() {
 
   const handleCreateEditor = useCallback((view: EditorView) => {
     editorRef.current = view;
+    // view.se
   }, []);
 
   const handleUpdate = useCallback(

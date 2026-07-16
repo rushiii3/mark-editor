@@ -9,9 +9,9 @@ const previewTabs = [
   {
     id: "editor",
     label: "Advanced Editor",
-    title: "Monaco Core with Slash Commands",
+    title: "CodeMirror with Slash Commands",
     description:
-      "Write code with VS Code's editor features. Trigger formatting, checklists, headings, code blocks, or page breaks instantly by typing '/'.",
+      "Write markdown with powerful editor features. Trigger formatting, checklists, headings, code blocks, or page breaks instantly by typing '/'.",
     mockup: (
       <div className="flex flex-col h-full bg-background font-mono text-xs sm:text-sm  p-6 overflow-y-auto">
         <div className="flex items-center gap-2 text-foreground mb-2 border-b border-foreground/10 pb-2">

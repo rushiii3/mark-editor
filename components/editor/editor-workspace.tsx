@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Activity, useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 
@@ -21,6 +21,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useFileStore } from "@/store/file-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { useCodeMirrorHandler } from "@/hooks/use-codemirror-handler";
+import { EditorView } from "@uiw/react-codemirror";
+import { Button } from "../ui/button";
 
 const EditorPanel = dynamic(
   () =>
@@ -75,7 +77,7 @@ Hidden content
 ## Features
 
 - Live preview with GitHub-flavored Markdown
-- Toolbar actions powered by Monaco
+- Toolbar actions powered by CodeMirror
 - Slash commands for fast formatting
 - Client-side PDF export
 
@@ -106,7 +108,7 @@ export function EditorWorkspace() {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile && !isTablet);
   const [tocOpen, setTocOpen] = useState(false);
 
-  const { customFonts, loadCustomFonts } = useSettingsStore();
+  const { customFonts, loadCustomFonts, showHeader } = useSettingsStore();
   const [fontStylesHtml, setFontStylesHtml] = useState("");
   const loadFiles = useFileStore((state) => state.loadFiles);
 
@@ -280,6 +282,58 @@ export function EditorWorkspace() {
     [closeSlashMenu, editorRef, slashMenuState.range]
   );
 
+  const getEditorInfo = () => {
+    const editorInstance = editorRef.current;
+    if (!editorInstance) {
+      return true;
+    }
+    const { lineWrapping } = editorInstance;
+    return lineWrapping;
+  };
+
+  const handleHtmlExport = async () => {
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+      <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>    
+</head>
+<body class="mx-auto text-black p-3 max-w-3xl min-h-full prose prose-gray prose-base dark:prose-invert
+prose-hr:mt-1 prose-hr:mb-3
+prose-code:before:content-none prose-code:after:content-none 
+prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+prose-img:rounded
+[&_th]:border
+[&_td]:border
+
+[&_table]:border 
+[&_table]:border-gray-400
+[&_table]:w-full
+[&_th]:px-3
+[&_th]:py-2
+[&_td]:px-3
+[&_td]:py-2">
+  ${previewHtml}
+</body>
+</html>`;
+
+    const htmlBlob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(htmlBlob);
+
+    console.log(url);
+    const link = document.createElement("a");
+    link.href = url;
+    // link.download = "document.html";
+    // document.body.appendChild(link);
+    // link.click();
+    // link.remove();
+
+    // URL.revokeObjectURL(url);
+  };
+
   const words = markdown.trim() ? markdown.trim().split(/\s+/).length : 0;
   const chars = markdown.length;
   const readingMinutes = Math.max(1, Math.ceil(words / 200));
@@ -288,78 +342,86 @@ export function EditorWorkspace() {
   const showSidebar = !isDrawer && sidebarOpen;
   const showTOC = !isMobile && !isTablet;
 
+  const heightClass = showHeader
+    ? "h-[calc(100dvh-9.7rem)]"
+    : "h-[calc(100dvh-5.9rem)]";
+
+  const editor = (
+    <EditorPanel
+      markdown={markdown}
+      onChange={setMarkdown}
+      slashMenuState={slashMenuState}
+      slashCommands={slashCommands}
+      onSelectSlashCommand={handleSlashCommand}
+      onCloseSlashMenu={closeSlashMenu}
+      handleCreateEditor={handleCreateEditor}
+      handleUpdate={handleUpdate}
+    />
+  );
+
+  const preview = <PreviewPanel html={previewHtml} previewRef={previewRef} />;
+
+  const toc = (
+    <TableOfContentsPanel
+      headings={headings}
+      activeHeadingId={activeHeadingId}
+      onSelect={handleSelectHeading}
+    />
+  );
+
   const contentPane = (
-    <div className="h-[calc(100dvh-155px)]">
-      {viewMode === "write" ? (
-        <EditorPanel
-          markdown={markdown}
-          onChange={setMarkdown}
-          slashMenuState={slashMenuState}
-          slashCommands={slashCommands}
-          onSelectSlashCommand={handleSlashCommand}
-          onCloseSlashMenu={closeSlashMenu}
-          handleCreateEditor={handleCreateEditor}
-          handleUpdate={handleUpdate}
-        />
-      ) : viewMode === "preview" ? (
-        showTOC ? (
+    <div className={heightClass}>
+      <Activity mode={viewMode === "write" ? "visible" : "hidden"}>
+        {editor}
+      </Activity>
+
+      <Activity mode={viewMode === "preview" ? "visible" : "hidden"}>
+        {showTOC ? (
           <ResizablePanelGroup orientation="horizontal">
-            <ResizablePanel defaultSize="78%">
-              <PreviewPanel html={previewHtml} previewRef={previewRef} />
-            </ResizablePanel>
+            <ResizablePanel defaultSize={78}>{preview}</ResizablePanel>
+
             <ResizableHandle withHandle />
-            <ResizablePanel defaultSize="22%" minSize="18%">
-              <TableOfContentsPanel
-                headings={headings}
-                activeHeadingId={activeHeadingId}
-                onSelect={handleSelectHeading}
-              />
+
+            <ResizablePanel defaultSize={22} minSize={18}>
+              {toc}
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (
-          <PreviewPanel html={previewHtml} previewRef={previewRef} />
-        )
-      ) : (
+          preview
+        )}
+      </Activity>
+
+      <Activity mode={viewMode === "split" ? "visible" : "hidden"}>
         <ResizablePanelGroup orientation="horizontal">
           {showSidebar && (
-            <ResizablePanel defaultSize="15%">
-              <Sidebar />
-            </ResizablePanel>
+            <>
+              <ResizablePanel defaultSize={15}>
+                <Sidebar />
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+            </>
           )}
 
-          <ResizablePanel
-            defaultSize={showSidebar ? "45%" : "50%"}
-            minSize="30%"
-          >
-            <EditorPanel
-              markdown={markdown}
-              onChange={setMarkdown}
-              slashMenuState={slashMenuState}
-              slashCommands={slashCommands}
-              onSelectSlashCommand={handleSlashCommand}
-              onCloseSlashMenu={closeSlashMenu}
-              handleCreateEditor={handleCreateEditor}
-              handleUpdate={handleUpdate}
-            />
+          <ResizablePanel defaultSize={showSidebar ? 45 : 50} minSize={30}>
+            {editor}
           </ResizablePanel>
+
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={showTOC ? "37%" : "50%"} minSize="28%">
-            <PreviewPanel html={previewHtml} previewRef={previewRef} />
+
+          <ResizablePanel defaultSize={showTOC ? 37 : 50} minSize={28}>
+            {preview}
           </ResizablePanel>
+
           {showTOC && (
             <>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize="13%">
-                <TableOfContentsPanel
-                  headings={headings}
-                  activeHeadingId={activeHeadingId}
-                  onSelect={handleSelectHeading}
-                />
-              </ResizablePanel>
+
+              <ResizablePanel defaultSize={13}>{toc}</ResizablePanel>
             </>
           )}
         </ResizablePanelGroup>
-      )}
+      </Activity>
     </div>
   );
 
@@ -378,6 +440,7 @@ export function EditorWorkspace() {
         onInsertLink={handleLinkInput}
       />
 
+      {/*<Button onClick={handleHtmlExport}>HTMl</Button>*/}
       {contentPane}
 
       {isDrawer && (
@@ -415,7 +478,9 @@ export function EditorWorkspace() {
         <span className="text-nowrap">Words: {words}</span>
         <span className="text-nowrap">Chars: {chars}</span>
         <span className="text-nowrap">Reading: {readingMinutes} min</span>
-        <span className="text-nowrap">Wrap: On</span>
+        <span className="text-nowrap">
+          Wrap: {getEditorInfo() ? "On" : "Off"}
+        </span>
         <span className="text-nowrap">
           Ln {cursorPosition.line}, Col {cursorPosition.column}
         </span>

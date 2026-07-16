@@ -1,3 +1,4 @@
+"use client";
 import { useCallback, type RefObject } from "react";
 import { type EditorView } from "@uiw/react-codemirror";
 import type { ToolbarAction } from "@/components/editor/types";
@@ -25,6 +26,7 @@ import {
 } from "@/components/editor/editor-utils";
 
 import { useSettingsStore } from "@/store/settings-store";
+import { getImageBlob } from "@/db/image";
 
 type UseToolbarHandlerProps = {
   editorRef: RefObject<EditorView | null>;
@@ -97,30 +99,54 @@ export function useToolbarHandler({
     [editorRef]
   );
 
+  function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function embedLocalImages(markdown: string) {
+    const regex = /!\[([^\]]*)\]\(local-image:([^)]+)\)/g;
+
+    let result = markdown;
+
+    const matches = [...markdown.matchAll(regex)];
+
+    for (const match of matches) {
+      const [fullMatch, alt, imageId] = match;
+
+      const blob = await getImageBlob(imageId);
+      if (!blob) continue;
+
+      const base64 = await blobToBase64(blob);
+
+      result = result.replace(fullMatch, `![${alt}](${base64})`);
+    }
+
+    return result;
+  }
   const handleToolbarAction = useCallback(
     async (action: ToolbarAction) => {
       const editorInstance = editorRef.current;
+      if (!editorInstance) {
+        return;
+      }
 
       if (action === "export-pdf") {
-        if (!editorInstance) {
-          return;
-        }
         const markdown = editorInstance.state.doc.toString();
-        console.log(markdown);
         try {
           const { generateMarkdownPdfBlob } =
             await import("@/lib/editor/pdf-generator");
-
           const blob = await generateMarkdownPdfBlob(markdown, activeFont);
-
-          // console.log(blob);
-          // console.log(blob instanceof Blob);
-          // console.log(typeof blob);
           const url = URL.createObjectURL(blob);
           console.log(url);
           const link = document.createElement("a");
           link.href = url;
-          // link.target = "_black";
           link.download = "document.pdf";
           link.click();
           URL.revokeObjectURL(url);
@@ -129,9 +155,38 @@ export function useToolbarHandler({
         }
         return;
       }
+      if (action === "export-html") {
+      }
+      if (action === "export-md") {
+        try {
+          const markdown = editorInstance.state.doc.toString();
 
-      if (!editorInstance) {
-        return;
+          const exportMarkdown = await embedLocalImages(markdown);
+
+          if (!exportMarkdown) {
+            return null;
+          }
+
+          console.log(exportMarkdown);
+
+          const blob = new Blob([exportMarkdown], {
+            type: "text/markdown;charset=utf-8"
+          });
+
+          const url = URL.createObjectURL(blob);
+
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "document.md";
+
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error("Failed to generate PDF:", error);
+        }
       }
 
       switch (action) {
@@ -228,6 +283,7 @@ export function useToolbarHandler({
         case "toc":
           onTocToggle?.();
           break;
+
         default:
           break;
       }

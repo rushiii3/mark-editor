@@ -38,9 +38,9 @@ const features = [
   },
   {
     icon: Code,
-    title: "Monaco Core Editor",
+    title: "CodeMirror Editor",
     description:
-      "Features VS Code's editor core, including autocomplete, multi-cursor, slash command overlays, and stable line wrapping."
+      "Features a robust Markdown editor core, including syntax highlighting, bracket matching, slash command overlays, and stable line wrapping."
   },
   {
     icon: SaveAll,
