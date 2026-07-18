@@ -3,14 +3,15 @@ import * as React from "react";
 const MOBILE_BREAKPOINT = 768;
 const TABLET_BREAKPOINT = 1024;
 
+function getWidth() {
+  return typeof window !== "undefined" ? window.innerWidth : 0;
+}
+
 function useWindowWidth() {
-  const [width, setWidth] = React.useState(0);
+  const [width, setWidth] = React.useState(getWidth);
 
   React.useEffect(() => {
     const update = () => setWidth(window.innerWidth);
-
-    update();
-
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
@@ -19,7 +20,8 @@ function useWindowWidth() {
 }
 
 export function useIsMobile() {
-  return useWindowWidth() < MOBILE_BREAKPOINT;
+  const width = useWindowWidth();
+  return width < MOBILE_BREAKPOINT;
 }
 
 export function useIsTablet() {
@@ -28,5 +30,6 @@ export function useIsTablet() {
 }
 
 export function useIsDesktop() {
-  return useWindowWidth() >= TABLET_BREAKPOINT;
+  const width = useWindowWidth();
+  return width >= TABLET_BREAKPOINT;
 }

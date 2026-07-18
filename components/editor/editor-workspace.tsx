@@ -21,8 +21,6 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useFileStore } from "@/store/file-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { useCodeMirrorHandler } from "@/hooks/use-codemirror-handler";
-import { EditorView } from "@uiw/react-codemirror";
-import { Button } from "../ui/button";
 
 const EditorPanel = dynamic(
   () =>
@@ -97,6 +95,7 @@ const slashCommands: SlashCommand[] = [
 ];
 
 export function EditorWorkspace() {
+  console.log("EditorWorkspace rendered");
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const [prevIsMobile, setPrevIsMobile] = useState(isMobile);
@@ -291,48 +290,48 @@ export function EditorWorkspace() {
     return lineWrapping;
   };
 
-  const handleHtmlExport = async () => {
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document</title>
-      <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<script src="https://cdn.tailwindcss.com?plugins=typography"></script>    
-</head>
-<body class="mx-auto text-black p-3 max-w-3xl min-h-full prose prose-gray prose-base dark:prose-invert
-prose-hr:mt-1 prose-hr:mb-3
-prose-code:before:content-none prose-code:after:content-none 
-prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-prose-img:rounded
-[&_th]:border
-[&_td]:border
+  //   const handleHtmlExport = async () => {
+  //     const html = `<!DOCTYPE html>
+  // <html lang="en">
+  // <head>
+  //   <meta charset="UTF-8" />
+  //   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  //   <title>Document</title>
+  //       <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  // <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  // </head>
+  // <body class="mx-auto text-black p-3 max-w-3xl min-h-full prose prose-gray prose-base dark:prose-invert
+  // prose-hr:mt-1 prose-hr:mb-3
+  // prose-code:before:content-none prose-code:after:content-none
+  // prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+  // prose-img:rounded
+  // [&_th]:border
+  // [&_td]:border
 
-[&_table]:border 
-[&_table]:border-gray-400
-[&_table]:w-full
-[&_th]:px-3
-[&_th]:py-2
-[&_td]:px-3
-[&_td]:py-2">
-  ${previewHtml}
-</body>
-</html>`;
+  // [&_table]:border
+  // [&_table]:border-gray-400
+  // [&_table]:w-full
+  // [&_th]:px-3
+  // [&_th]:py-2
+  // [&_td]:px-3
+  // [&_td]:py-2">
+  //   ${previewHtml}
+  // </body>
+  // </html>`;
 
-    const htmlBlob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(htmlBlob);
+  //     const htmlBlob = new Blob([html], { type: "text/html;charset=utf-8" });
+  //     const url = URL.createObjectURL(htmlBlob);
 
-    console.log(url);
-    const link = document.createElement("a");
-    link.href = url;
-    // link.download = "document.html";
-    // document.body.appendChild(link);
-    // link.click();
-    // link.remove();
+  //     console.log(url);
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     // link.download = "document.html";
+  //     // document.body.appendChild(link);
+  //     // link.click();
+  //     // link.remove();
 
-    // URL.revokeObjectURL(url);
-  };
+  //     // URL.revokeObjectURL(url);
+  //   };
 
   const words = markdown.trim() ? markdown.trim().split(/\s+/).length : 0;
   const chars = markdown.length;

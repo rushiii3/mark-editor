@@ -8,6 +8,7 @@ type TableFormProps = {
 };
 
 export function TableForm({ onSubmit }: TableFormProps) {
+  console.log("ImageForm rendered");
   const [rows, setRows] = useState(2);
   const [columns, setColumns] = useState(2);
 

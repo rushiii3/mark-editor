@@ -288,7 +288,7 @@ export function useToolbarHandler({
           break;
       }
     },
-    [editorRef, onSidebarToggle, onTocToggle, activeFont]
+    [editorRef, activeFont, onSidebarToggle, onTocToggle]
   );
 
   return {

@@ -24,7 +24,6 @@ import {
   Heading5,
   Heading6,
   HelpCircleFreeIcons,
-  Hidden,
   HistoryFreeIcons,
   HtmlFile01Icon,
   IdeaIcon,
@@ -76,14 +75,14 @@ import {
 } from "@/components/ui/tooltip";
 
 import { uploadLocalImage } from "@/lib/editor/image-upload";
-import { ToolbarDropdown } from "./toolbar-dropdown";
+import ToolbarDropdown from "./toolbar-dropdown";
 import { LinkForm } from "./forms/link-form";
 import { TableForm } from "./forms/table-form";
-import { ImageForm } from "./forms/image-form";
 import { ImageGallery } from "./image-gallery";
 import { useImageStore } from "@/store/imageStore";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { useSettingsStore } from "@/store/settings-store";
+import { ImageForm } from "./forms/image-form";
 
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
@@ -212,6 +211,8 @@ function toggleFullScreen() {
   void document.exitFullscreen();
 }
 
+// console.log("Toolbar rendered");
+
 export const Toolbar = memo(function Toolbar({
   onAction,
   onToggleTheme,
@@ -234,16 +235,21 @@ export const Toolbar = memo(function Toolbar({
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    console.log("Result", event);
     const file = event.target.files?.[0];
 
-    if (!file) {
-      return;
+    if (!file) return;
+
+    try {
+      const { url, alt } = await uploadLocalImage(file);
+
+      onInsertImage(url, alt);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    } finally {
+      // Allows selecting the same file again
+      event.target.value = "";
     }
-
-    const { url, alt } = await uploadLocalImage(file);
-    onInsertImage(url, alt);
-
-    event.target.value = "";
   };
 
   const images = useImageStore((state) => state.images);
@@ -254,6 +260,8 @@ export const Toolbar = memo(function Toolbar({
   const isDrawer = isMobile || isTablet;
 
   const { showHeader, toggleHeader } = useSettingsStore();
+
+  console.log("Toolbar rendered ");
 
   return (
     <header className="border-b bg-background">
@@ -466,6 +474,7 @@ export const Toolbar = memo(function Toolbar({
           <ToolbarDropdown
             label="Insert Link"
             icon={<HugeiconsIcon icon={Link01FreeIcons} size={16} />}
+            key="insert-link-dropdown"
           >
             <LinkForm onSubmit={onInsertLink} />
           </ToolbarDropdown>
@@ -473,6 +482,7 @@ export const Toolbar = memo(function Toolbar({
           <ToolbarDropdown
             label="Insert Table"
             icon={<HugeiconsIcon icon={TableIcon} size={16} />}
+            key="insert-table-dropdown"
           >
             <TableForm onSubmit={onInsertTable} />
           </ToolbarDropdown>
@@ -480,6 +490,7 @@ export const Toolbar = memo(function Toolbar({
           <ToolbarDropdown
             label="Insert Image"
             icon={<HugeiconsIcon icon={ImageUploadFreeIcons} size={16} />}
+            key="insert-image-dropdown"
           >
             <ImageForm
               onInsertUrl={onInsertImage}
@@ -505,6 +516,7 @@ export const Toolbar = memo(function Toolbar({
           <ToolbarDropdown
             label="Callouts"
             icon={<HugeiconsIcon icon={IdeaIcon} size={16} />}
+            key="callouts-dropdown"
           >
             {CALLOUTS.map((callout) => (
               <DropdownMenuItem
