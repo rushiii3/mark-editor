@@ -69,4 +69,3 @@ const EditorWorkspace = dynamic(
 export default function EditorPage() {
   return <EditorWorkspace />;
 }
-
