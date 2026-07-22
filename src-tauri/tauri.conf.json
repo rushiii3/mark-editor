@@ -5,7 +5,7 @@
   "identifier": "com.manus.mardown",
   "build": {
     "frontendDist": "../out",
-    "devUrl": "http://localhost:3000/editor",
+    "devUrl": "http://localhost:3000/",
     "beforeDevCommand": "pnpm run dev",
     "beforeBuildCommand": "pnpm run build"
   },

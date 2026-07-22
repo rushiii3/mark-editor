@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -19,6 +19,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 //   subsets: ["latin"],
 //   variable: "--font-mono"
 // });
+
+export const viewport: Viewport = {
+  viewportFit: "cover"
+};
+
 export const metadata: Metadata = {
   title: "Mark Editor",
   description: "Offline-first Markdown to PDF editor",
@@ -45,7 +50,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Manus" />
       </head>
       <body
-      // className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased min-h-full`}
+        className="min-h-dvh
+    pt-[env(safe-area-inset-top)]
+    pb-[env(safe-area-inset-bottom)]
+    pl-[env(safe-area-inset-left)]
+    pr-[env(safe-area-inset-right)]"
+        // className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased min-h-full`}
       >
         <ThemeProvider
           attribute="class"
