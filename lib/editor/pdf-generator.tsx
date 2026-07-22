@@ -12,6 +12,7 @@ import {
   Image,
   Link
 } from "@react-pdf/renderer";
+import { Math } from "@react-pdf/math";
 import { getImageBlob } from "@/db/image";
 
 // Register Google Font Inter
@@ -412,6 +413,15 @@ function renderChildren(children: AstNode[] | undefined, styles: any) {
   return children.map((child, index) => renderInlineNode(child, index, styles));
 }
 
+function getMathHeight(latex: string, inline: boolean) {
+  if (!inline) {
+    return 18;
+  }
+
+  const hasTallContent = /\\frac|\\sqrt|\\sum|\\int|\\prod|\\begin/.test(latex);
+
+  return hasTallContent ? 13 : 10;
+}
 function renderInlineNode(
   node: AstNode,
   index: number,
@@ -419,7 +429,11 @@ function renderInlineNode(
 ): React.ReactNode {
   switch (node.type) {
     case "text":
-      return node.value;
+      return (
+        <Text key={index} style={[styles.paragraph, node.style]}>
+          {node.value ?? ""}
+        </Text>
+      );
     case "strong":
       return (
         <Text key={index} style={styles.bold}>
@@ -467,6 +481,19 @@ function renderInlineNode(
       );
     case "break":
       return "\n";
+    case "inlineMath":
+      console.log("inline math: ", node.value);
+
+      return (
+        <Math
+          inline
+          height={getMathHeight(node.value, true)}
+          color="black"
+          key={index}
+        >
+          {typeof node.value === "string" ? node.value : ""}
+        </Math>
+      );
     default:
       return null;
   }
@@ -508,9 +535,17 @@ function renderBlockNode(
         );
       }
       return (
-        <Text key={index} style={[styles.paragraph, node.style]}>
-          {renderChildren(node.children, styles)}
-        </Text>
+        <View
+          key={index}
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-start",
+            flexWrap: "wrap"
+            // alignItems: "flex-ce"
+          }}
+        >
+          {node.children?.map((child, i) => renderInlineNode(child, i, styles))}
+        </View>
       );
     }
     case "blockquote":
@@ -613,6 +648,18 @@ function renderBlockNode(
           )}
         </View>
       );
+    case "math":
+      return (
+        <Math
+          inline={false}
+          height={getMathHeight(node.value, false)}
+          color="black"
+          key={index}
+        >
+          {typeof node.value === "string" ? node.value : ""}
+        </Math>
+      );
+
     case "containerDirective": {
       if (node.name === "callout") {
         const labelNode = node.children?.find(
@@ -817,6 +864,13 @@ function MarkdownPdfDocument({
             return renderBlockNode(child, index, styles);
           })}
         </View>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text>The equation </Text>
+          <Math inline height={10}>
+            {"E = mc^2"}
+          </Math>
+          <Text> is famous.</Text>
+        </View>
       </Page>
     </Document>
   );
@@ -830,20 +884,23 @@ export async function generateMarkdownPdfBlob(
     { remark },
     { default: remarkGfm },
     { default: remarkDirective },
-    { emojify }
+    { emojify },
+    { default: remarkMath }
   ] = await Promise.all([
     import("remark"),
     import("remark-gfm"),
     import("remark-directive"),
-    import("node-emoji")
+    import("node-emoji"),
+    import("remark-math")
   ]);
 
   const processor = remark()
     .use(remarkGfm)
     // .use(remarkEmoji)
-    .use(remarkDirective);
+    .use(remarkDirective)
+    .use(remarkMath);
   const ast = processor.parse(markdown) as unknown as AstNode;
-  // console.log(ast);
+  console.log(ast);
 
   // Resolve local image Blobs asynchronously from IndexedDB before rendering
   await resolveAstLocalImages(ast);
