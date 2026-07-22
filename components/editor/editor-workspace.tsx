@@ -111,12 +111,15 @@ export function EditorWorkspace() {
   const { customFonts, loadCustomFonts, showHeader } = useSettingsStore();
   const [fontStylesHtml, setFontStylesHtml] = useState("");
   const loadFiles = useFileStore((state) => state.loadFiles);
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const lineWrapping = useSettingsStore((state) => state.lineWrapping);
   // const loadFileById = useFileStore((state) => state.loadFileById);
 
   // Load custom fonts on initial mount
   useEffect(() => {
     loadCustomFonts();
     loadFiles();
+    loadSettings();
   }, []);
 
   // Generate dynamic @font-face style declarations when customFonts state changes
@@ -195,7 +198,7 @@ export function EditorWorkspace() {
   const previewEnabled = viewMode !== "write";
 
   // 1. Hook: Document state & IndexedDB auto-saving
-  const { markdown, setMarkdown } = useDocumentPersistence(starterMarkdown);
+  const { markdown, setMarkdown } = useDocumentPersistence();
 
   const {
     editorRef,
@@ -288,15 +291,6 @@ export function EditorWorkspace() {
     },
     [closeSlashMenu, editorRef, slashMenuState.range]
   );
-
-  const getEditorInfo = () => {
-    const editorInstance = editorRef.current;
-    if (!editorInstance) {
-      return true;
-    }
-    const { lineWrapping } = editorInstance;
-    return lineWrapping;
-  };
 
   //   const handleHtmlExport = async () => {
   //     const html = `<!DOCTYPE html>
@@ -486,7 +480,7 @@ export function EditorWorkspace() {
         chars={chars}
         readingMinutes={readingMinutes}
         cursorPosition={cursorPosition}
-        wrap={getEditorInfo() ? true : false}
+        wrap={lineWrapping}
       />
     </main>
   );
