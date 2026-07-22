@@ -9,6 +9,7 @@ import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import type { SlashCommand, SlashMenuState } from "@/components/editor/types";
+import { useSettingsStore } from "@/store/settings-store";
 
 type EditorPanelProps = {
   markdown: string;
@@ -143,6 +144,8 @@ export function EditorPanel({
   handleCreateEditor,
   handleUpdate
 }: EditorPanelProps) {
+  const lineWrapping = useSettingsStore((state) => state.lineWrapping);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { theme } = useTheme();
@@ -151,12 +154,12 @@ export function EditorPanel({
   const extensions = useMemo(
     () => [
       markdownExtenstion(),
-      EditorView.lineWrapping,
+      lineWrapping ? EditorView.lineWrapping : [],
       syntaxHighlighting(
         isDark ? markdownHighlightStyleDark : markdownHighlightStyleLight
       )
     ],
-    [isDark]
+    [isDark, lineWrapping]
   );
 
   useEffect(() => {

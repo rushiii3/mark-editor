@@ -1,7 +1,8 @@
 import { useFileStore } from "@/store/file-store";
-import { Save } from "lucide-react";
-import React from "react";
 import { SaveStatusIndicator } from "./footer/SaveStatusIndicator";
+import { Button } from "../ui/button";
+import { useSettingsStore } from "@/store/settings-store";
+import { memo } from "react";
 type EditorFooterProps = {
   words: number;
   chars: number;
@@ -20,13 +21,21 @@ const EditorFooter = ({
   wrap
 }: EditorFooterProps) => {
   const saveStatus = useFileStore((s) => s.saveStatus);
+  const toggleLineWrapping = useSettingsStore(
+    (state) => state.toggleLineWrapping
+  );
 
   return (
     <footer className="min-h-9 items-center gap-6 overflow-x-auto px-4 text-sm text-muted-foreground flex ">
       <span className="text-nowrap">Words: {words}</span>
       <span className="text-nowrap">Chars: {chars}</span>
       <span className="text-nowrap">Reading: {readingMinutes} min</span>
-      <span className="text-nowrap">Wrap: {wrap ? "On" : "Off"}</span>
+      <span className="text-nowrap">
+        Wrap:{" "}
+        <Button variant="ghost" onClick={toggleLineWrapping} className="p-0">
+          {wrap ? "On" : "Off"}
+        </Button>
+      </span>
       <span className="text-nowrap">
         Ln {cursorPosition.line}, Col {cursorPosition.column}
       </span>
@@ -43,4 +52,4 @@ const EditorFooter = ({
   );
 };
 
-export default EditorFooter;
+export default memo(EditorFooter);

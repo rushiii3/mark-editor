@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 export const DB_NAME = "markdown-editor";
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 export interface AppDB extends DBSchema {
   images: {
@@ -49,6 +49,14 @@ export interface AppDB extends DBSchema {
       "by-family": string;
     };
   };
+  settings: {
+    key: string;
+    value: {
+      key: string;
+      value: unknown;
+      updatedAt: number;
+    };
+  };
 }
 
 let dbPromise: Promise<IDBPDatabase<AppDB>> | null = null;
@@ -85,6 +93,14 @@ export function getDB() {
               keyPath: "id"
             });
             store.createIndex("by-family", "family");
+          }
+        }
+
+        if (oldVersion < 4) {
+          if (!db.objectStoreNames.contains("settings")) {
+            db.createObjectStore("settings", {
+              keyPath: "key"
+            });
           }
         }
       }

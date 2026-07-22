@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getAllFonts } from "@/db/font";
+import { getSetting, setSetting } from "@/db/setting";
 
 interface SettingsState {
   activeFont: string;
@@ -8,6 +9,9 @@ interface SettingsState {
   loadCustomFonts: () => Promise<void>;
   showHeader: boolean;
   toggleHeader: () => void;
+  lineWrapping: boolean;
+  toggleLineWrapping: () => void;
+  loadSettings: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -17,7 +21,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       : "Inter",
   customFonts: [],
   showHeader: true,
-
+  lineWrapping: true,
   setActiveFont: (font: string) => {
     if (typeof window !== "undefined") {
       localStorage.setItem("manus-active-font", font);
@@ -35,9 +39,32 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     }
   },
 
+  loadSettings: async () => {
+    try {
+      const lineWrappingSetting = await getSetting<boolean>(
+        "editor.lineWrapping"
+      );
+      if (lineWrappingSetting !== undefined) {
+        set({ lineWrapping: lineWrappingSetting });
+      }
+    } catch (err) {
+      console.error("Failed to load settings from DB:", err);
+    }
+  },
+
   toggleHeader: async () => {
     set((state) => ({
       showHeader: !state.showHeader
     }));
+  },
+
+  toggleLineWrapping: async () => {
+    set((state) => ({
+      lineWrapping: !state.lineWrapping
+    }));
+    await setSetting(
+      "editor.lineWrapping",
+      useSettingsStore.getState().lineWrapping
+    );
   }
 }));
