@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 import { useFileStore } from "@/store/file-store";
-import { getDocument, saveDocument } from "@/db/documents";
+import { getDocument } from "@/db/documents";
 
-export function useDocumentPersistence(initialContent: string) {
-  const [markdown, setMarkdown] = useState(initialContent);
+export function useDocumentPersistence() {
+  // const [markdown, setMarkdown] = useState(initialContent);
   const activeFileId = useFileStore((s) => s.activeFileId);
+  const loading = useFileStore((s) => s.loading);
+  const setSaveStatus = useFileStore((s) => s.setSaveStatus);
+  const updateContent = useFileStore((s) => s.updateContent);
+  const activeFile = useFileStore((state) =>
+    state.files.find((f) => f.id === state.activeFileId)
+  );
+  const [markdown, setMarkdown] = useState(activeFile?.content ?? "");
 
   useEffect(() => {
     if (!activeFileId) return;
@@ -28,28 +35,18 @@ export function useDocumentPersistence(initialContent: string) {
   }, [activeFileId]);
 
   useEffect(() => {
-    if (!activeFileId) return;
-
-    const timeout = setTimeout(async () => {
-      try {
-        const existing = await getDocument(activeFileId);
-        await saveDocument({
-          id: activeFileId,
-          name: existing?.name ?? "Untitled",
-          content: markdown,
-          createdAt: existing?.createdAt ?? Date.now(),
-          updatedAt: Date.now(),
-        });
-      } catch (error) {
-        console.error("Failed to auto-save document:", error);
-      }
+    console.log("Markdown changed:", loading, activeFileId, markdown);
+    if (!activeFileId || loading) return;
+    setSaveStatus("saving");
+    const timeout = setTimeout(() => {
+      void updateContent(activeFileId, markdown);
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [markdown, activeFileId]);
+  }, [markdown, activeFileId, updateContent, setSaveStatus, loading]);
 
   return {
     markdown,
-    setMarkdown,
+    setMarkdown
   };
 }
