@@ -21,6 +21,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useFileStore } from "@/store/file-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { useCodeMirrorHandler } from "@/hooks/use-codemirror-handler";
+import EditorFooter from "./editor-footer";
 
 const EditorPanel = dynamic(
   () =>
@@ -110,6 +111,7 @@ export function EditorWorkspace() {
   const { customFonts, loadCustomFonts, showHeader } = useSettingsStore();
   const [fontStylesHtml, setFontStylesHtml] = useState("");
   const loadFiles = useFileStore((state) => state.loadFiles);
+  // const loadFileById = useFileStore((state) => state.loadFileById);
 
   // Load custom fonts on initial mount
   useEffect(() => {
@@ -172,6 +174,12 @@ export function EditorWorkspace() {
   const { resolvedTheme, setTheme } = useTheme();
 
   const activeFileId = useFileStore((s) => s.activeFileId);
+  // useEffect(() => {
+  //   if (!activeFileId) return;
+
+  //   loadFileById(activeFileId);
+  // }, [activeFileId]);
+
   const [prevActiveFileId, setPrevActiveFileId] = useState(activeFileId);
 
   const isDrawer = isMobile || isTablet;
@@ -473,22 +481,13 @@ export function EditorWorkspace() {
 
       <Separator />
 
-      <footer className="min-h-9 items-center gap-6 overflow-x-auto px-4 text-sm text-muted-foreground flex ">
-        <span className="text-nowrap">Words: {words}</span>
-        <span className="text-nowrap">Chars: {chars}</span>
-        <span className="text-nowrap">Reading: {readingMinutes} min</span>
-        <span className="text-nowrap">
-          Wrap: {getEditorInfo() ? "On" : "Off"}
-        </span>
-        <span className="text-nowrap">
-          Ln {cursorPosition.line}, Col {cursorPosition.column}
-        </span>
-        <span className="ml-auto text-emerald-600 text-nowrap">
-          All changes saved
-        </span>
-        <span className="text-nowrap">UTF-8</span>
-        <span className="text-nowrap">Markdown</span>
-      </footer>
+      <EditorFooter
+        words={words}
+        chars={chars}
+        readingMinutes={readingMinutes}
+        cursorPosition={cursorPosition}
+        wrap={getEditorInfo() ? true : false}
+      />
     </main>
   );
 }

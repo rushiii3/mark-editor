@@ -1,4 +1,5 @@
 import { deleteDocument, getDocuments, saveDocument } from "@/db/documents";
+import { SaveStatus } from "@/types";
 import { create } from "zustand";
 
 export interface MarkdownFile {
@@ -12,7 +13,9 @@ export interface MarkdownFile {
 interface FileStore {
   files: MarkdownFile[];
   activeFileId: string | null;
-
+  saveStatus: SaveStatus;
+  loading: boolean;
+  setSaveStatus(status: SaveStatus): void;
   createFile(): void;
 
   deleteFile(id: string): void;
@@ -24,20 +27,44 @@ interface FileStore {
   setActiveFile(id: string): void;
 
   loadFiles(): void;
+
+  // loadFileById(id: string): void;
 }
 
 export const useFileStore = create<FileStore>((set) => ({
   files: [],
   activeFileId: null,
+  saveStatus: "idle",
+  loading: false,
 
   loadFiles: async () => {
+    set({ loading: true });
     const files = await getDocuments();
 
     set({
       files,
-      activeFileId: files[0]?.id ?? null
+      activeFileId: files[0]?.id ?? null,
+      loading: false
     });
   },
+
+  // loadFileById: async (id: string) => {
+  //   set({ loading: true });
+  //   const file = await getDocument(id);
+
+  //   if (file) {
+  //     set({
+  //       files: [
+  //         file,
+  //         ...useFileStore.getState().files.filter((f) => f.id !== id)
+  //       ],
+  //       activeFileId: id,
+  //       loading: false
+  //     });
+  //   } else {
+  //     set({ loading: false });
+  //   }
+  // },
 
   createFile: async () => {
     const file: MarkdownFile = {
@@ -86,6 +113,7 @@ export const useFileStore = create<FileStore>((set) => ({
   },
 
   updateContent: async (id, content) => {
+    console.log("Updating content for file ID:", id);
     set((state) => {
       const files = state.files.map((file) =>
         file.id === id
@@ -98,12 +126,16 @@ export const useFileStore = create<FileStore>((set) => ({
       );
 
       saveDocument(files.find((f) => f.id === id)!);
+      set({
+        saveStatus: "saved"
+      });
 
       return { files };
     });
   },
 
+  setSaveStatus: (status) => set({ saveStatus: status }),
   setActiveFile(id) {
-    set({ activeFileId: id });
+    set({ activeFileId: id, saveStatus: "idle" });
   }
 }));

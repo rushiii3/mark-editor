@@ -3,8 +3,9 @@ import type { MarkdownFile } from "@/store/file-store";
 
 export async function getDocuments() {
   const db = await getDB();
+  const documents = await db.getAllFromIndex("documents", "by-createdAt");
 
-  return db.getAllFromIndex("documents", "by-createdAt");
+  return documents.reverse();
 }
 
 export async function saveDocument(document: AppDB["documents"]["value"]) {
