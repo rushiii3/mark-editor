@@ -487,7 +487,7 @@ function renderInlineNode(
       return (
         <Math
           inline
-          height={getMathHeight(node.value, true)}
+          height={node.value && getMathHeight(node.value, true)}
           color="black"
           key={index}
         >
@@ -652,7 +652,7 @@ function renderBlockNode(
       return (
         <Math
           inline={false}
-          height={getMathHeight(node.value, false)}
+          height={node.value && getMathHeight(node.value, false)}
           color="black"
           key={index}
         >
