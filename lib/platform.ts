@@ -1,24 +1,48 @@
 import { platform } from "@tauri-apps/plugin-os";
 
-export async function getPlatform() {
-  const isTauri =
-    typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+export type Runtime = "tauri" | "web";
 
-  if (isTauri) {
+export interface PlatformInfo {
+  runtime: Runtime;
+  os: string;
+  isTauri: boolean;
+  isWeb: boolean;
+  isDesktop: boolean;
+  isMobile: boolean;
+}
+
+function isTauriRuntime(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+function isMobileBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+export async function getPlatformInfo(): Promise<PlatformInfo> {
+  if (isTauriRuntime()) {
     const os = await platform();
 
     return {
-      runtime: "tauri" as const,
-      os
+      runtime: "tauri",
+      os,
+      isTauri: true,
+      isWeb: false,
+      isDesktop: true,
+      isMobile: false
     };
   }
 
-  const isMobile =
-    typeof navigator !== "undefined" &&
-    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const mobile = isMobileBrowser();
 
   return {
-    runtime: "web" as const,
-    os: isMobile ? "mobile" : "desktop"
+    runtime: "web",
+    os: mobile ? "mobile" : "desktop",
+    isTauri: false,
+    isWeb: true,
+    isDesktop: !mobile,
+    isMobile: mobile
   };
 }

@@ -75,11 +75,18 @@ export const useFileStore = create<FileStore>((set) => ({
       updatedAt: Date.now()
     };
 
-    await saveDocument(file);
-    set((state) => ({
-      files: [file, ...state.files],
-      activeFileId: file.id
-    }));
+    try {
+      await saveDocument(file);
+      set((state) => ({
+        files: [file, ...state.files],
+        activeFileId: file.id,
+        saveStatus: "idle"
+      }));
+    } catch (error) {
+      console.error("Error saving document:", error);
+      set({ saveStatus: "save_failed" });
+      return;
+    }
   },
 
   deleteFile: async (id) => {
@@ -113,25 +120,51 @@ export const useFileStore = create<FileStore>((set) => ({
   },
 
   updateContent: async (id, content) => {
-    console.log("Updating content for file ID:", id);
-    set((state) => {
-      const files = state.files.map((file) =>
-        file.id === id
-          ? {
-              ...file,
-              content,
-              updatedAt: Date.now()
-            }
-          : file
-      );
+    let updatedFile: MarkdownFile | undefined;
 
-      saveDocument(files.find((f) => f.id === id)!);
+    set((state) => {
+      const files = state.files.map((file) => {
+        if (file.id !== id) return file;
+
+        updatedFile = {
+          ...file,
+          content,
+          updatedAt: Date.now()
+        };
+
+        return updatedFile;
+      });
+
+      return {
+        files,
+        saveStatus: "saving",
+        saveError: undefined
+      };
+    });
+
+    if (!updatedFile) return;
+
+    try {
+      throw new DOMException("Storage quota exceeded", "QuotaExceededError");
+      await saveDocument(updatedFile);
+
       set({
         saveStatus: "saved"
       });
-
-      return { files };
-    });
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        error.name === "QuotaExceededError"
+      ) {
+        set({
+          saveStatus: "storage_full"
+        });
+      } else {
+        set({
+          saveStatus: "save_failed"
+        });
+      }
+    }
   },
 
   setSaveStatus: (status) => set({ saveStatus: status }),
