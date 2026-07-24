@@ -7,25 +7,25 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const testimonials = [
   {
     quote:
-      "The local-first architecture is a game changer. All my notes and images stay completely inside my browser database, avoiding third-party servers. Plus, the PDF rendering margins are pixel-perfect.",
-    author: "Alex Rivera",
+      "Its incredibly useful in day to day life to take notes and render markdown files on the internet without having to worry about a server storing my data. Also the power it has is awesome with Katex and Mermaid builtin it leads to very expressive md files helping to represent what the file was meant to do",
+    author: "Aaditya Pal",
     role: "Senior Frontend Engineer",
-    avatar: "AR"
-  },
-  {
-    quote:
-      "Writing documents in CodeMirror with custom slash commands is incredibly fast. Highly responsive UI with zero lag, and the open-source MIT license means I can trust it.",
-    author: "Elena Rostova",
-    role: "Fullstack Developer",
-    avatar: "ER"
-  },
-  {
-    quote:
-      "I use Manus for all my technical design docs and resumes. The A4 page guide visualizer lets me layout multi-page documents perfectly without clipping elements. Clean HTML copies are a nice touch.",
-    author: "Marcus Chen",
-    role: "Software Architect",
-    avatar: "MC"
+    avatar: "AP"
   }
+  // {
+  //   quote:
+  //     "Writing documents in CodeMirror with custom slash commands is incredibly fast. Highly responsive UI with zero lag, and the open-source MIT license means I can trust it.",
+  //   author: "Elena Rostova",
+  //   role: "Fullstack Developer",
+  //   avatar: "ER"
+  // },
+  // {
+  //   quote:
+  //     "I use Manus for all my technical design docs and resumes. The A4 page guide visualizer lets me layout multi-page documents perfectly without clipping elements. Clean HTML copies are a nice touch.",
+  //   author: "Marcus Chen",
+  //   role: "Software Architect",
+  //   avatar: "MC"
+  // }
 ];
 
 export function Testimonials() {

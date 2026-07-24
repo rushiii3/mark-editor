@@ -22,6 +22,7 @@ import { useFileStore } from "@/store/file-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { useCodeMirrorHandler } from "@/hooks/use-codemirror-handler";
 import EditorFooter from "./editor-footer";
+import { useStorageStore } from "@/store/storage-store";
 
 const EditorPanel = dynamic(
   () =>
@@ -116,10 +117,13 @@ export function EditorWorkspace() {
   // const loadFileById = useFileStore((state) => state.loadFileById);
 
   // Load custom fonts on initial mount
+  const refresh = useStorageStore((s) => s.refresh);
+
   useEffect(() => {
     loadCustomFonts();
     loadFiles();
     loadSettings();
+    refresh();
   }, []);
 
   // Generate dynamic @font-face style declarations when customFonts state changes
