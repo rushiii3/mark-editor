@@ -145,7 +145,7 @@ export const useFileStore = create<FileStore>((set) => ({
     if (!updatedFile) return;
 
     try {
-      throw new DOMException("Storage quota exceeded", "QuotaExceededError");
+      // throw new DOMException("Storage quota exceeded", "QuotaExceededError");
       await saveDocument(updatedFile);
 
       set({
