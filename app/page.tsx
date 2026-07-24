@@ -42,7 +42,7 @@ export default function Home() {
         <WhyOpenSource />
         <ProductPreview />
         <Workflow />
-        {/* <Testimonials /> */}
+        <Testimonials />
         <Community />
         <FAQ />
         <CTA />
