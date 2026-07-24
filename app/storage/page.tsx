@@ -1,12 +1,10 @@
-import Link from "next/link";
-import React from "react";
+import { StorageDashboard } from "./storage-dashboard";
 
-const Page = () => {
-  return (
-    <div>
-      <Link href="/test">test</Link>
-    </div>
-  );
+export const metadata = {
+  title: "Storage",
+  description: "Monitor local storage usage, quota, and resource categories."
 };
 
-export default Page;
+export default function StoragePage() {
+  return <StorageDashboard />;
+}

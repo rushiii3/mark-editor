@@ -83,6 +83,7 @@ import { useImageStore } from "@/store/imageStore";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { useSettingsStore } from "@/store/settings-store";
 import { ImageForm } from "./forms/image-form";
+import { useStorageStore } from "@/store/storage-store";
 
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
@@ -223,6 +224,7 @@ export const Toolbar = memo(function Toolbar({
   viewMode
 }: ToolbarProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const refresh = useStorageStore((s) => s.refresh);
   const topMode =
     viewMode === "write"
       ? "write"
@@ -244,6 +246,7 @@ export const Toolbar = memo(function Toolbar({
       const { url, alt } = await uploadLocalImage(file);
 
       onInsertImage(url, alt);
+      refresh();
     } catch (error) {
       console.error("Error uploading image:", error);
     } finally {

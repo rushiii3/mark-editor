@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -154,6 +155,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           >
             Custom Fonts
           </button>
+          <Link
+            href="/storage"
+            className="px-4 py-2 text-sm font-medium border-b-2 -mb-px border-transparent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Storage
+          </Link>
         </div>
 
         {activeTab === "appearance" && (

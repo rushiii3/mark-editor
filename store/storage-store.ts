@@ -26,6 +26,7 @@ export const useStorageStore = create<StorageState>((set) => ({
     }
 
     const estimate = await navigator.storage.estimate();
+    console.log("Storage estimate:", estimate);
 
     const usage = estimate.usage ?? 0;
     const quota = estimate.quota ?? 0;

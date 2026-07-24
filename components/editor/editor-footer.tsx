@@ -27,7 +27,9 @@ const EditorFooter = ({
   const toggleLineWrapping = useSettingsStore(
     (state) => state.toggleLineWrapping
   );
-  const { percentage } = useStorageStore();
+  const { usage, quota, percentage } = useStorageStore();
+
+  console.log("usage", usage, "quota", quota, "percentage", percentage);
 
   return (
     <footer className="min-h-9 items-center gap-6 overflow-x-auto px-4 text-sm text-muted-foreground flex ">
