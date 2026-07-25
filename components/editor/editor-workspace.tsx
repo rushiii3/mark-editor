@@ -23,6 +23,7 @@ import { useSettingsStore } from "@/store/settings-store";
 import { useCodeMirrorHandler } from "@/hooks/use-codemirror-handler";
 import EditorFooter from "./editor-footer";
 import { useStorageStore } from "@/store/storage-store";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 
 const EditorPanel = dynamic(
   () =>
@@ -347,10 +348,6 @@ export function EditorWorkspace() {
   const showSidebar = !isDrawer && sidebarOpen;
   const showTOC = !isMobile && !isTablet;
 
-  const heightClass = showHeader
-    ? "h-[calc(100dvh-9.7rem)]"
-    : "h-[calc(100dvh-5.9rem)]";
-
   const editor = (
     <EditorPanel
       markdown={markdown}
@@ -375,59 +372,69 @@ export function EditorWorkspace() {
   );
 
   const contentPane = (
-    <div className={heightClass}>
-      <Activity mode={viewMode === "write" ? "visible" : "hidden"}>
-        {editor}
-      </Activity>
+    <LazyMotion features={domAnimation}>
+      <m.div
+        animate={{
+          height: showHeader ? "calc(100dvh - 9.7rem)" : "calc(100dvh - 5.9rem)"
+        }}
+        transition={{
+          duration: 0.2,
+          ease: "easeInOut"
+        }}
+      >
+        <Activity mode={viewMode === "write" ? "visible" : "hidden"}>
+          {editor}
+        </Activity>
 
-      <Activity mode={viewMode === "preview" ? "visible" : "hidden"}>
-        {showTOC ? (
+        <Activity mode={viewMode === "preview" ? "visible" : "hidden"}>
+          {showTOC ? (
+            <ResizablePanelGroup orientation="horizontal">
+              <ResizablePanel defaultSize={78}>{preview}</ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              <ResizablePanel defaultSize={22} minSize={18}>
+                {toc}
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            preview
+          )}
+        </Activity>
+
+        <Activity mode={viewMode === "split" ? "visible" : "hidden"}>
           <ResizablePanelGroup orientation="horizontal">
-            <ResizablePanel defaultSize={78}>{preview}</ResizablePanel>
+            {showSidebar && (
+              <>
+                <ResizablePanel defaultSize={15}>
+                  <Sidebar />
+                </ResizablePanel>
+
+                <ResizableHandle withHandle />
+              </>
+            )}
+
+            <ResizablePanel defaultSize={showSidebar ? 45 : 50} minSize={30}>
+              {editor}
+            </ResizablePanel>
 
             <ResizableHandle withHandle />
 
-            <ResizablePanel defaultSize={22} minSize={18}>
-              {toc}
+            <ResizablePanel defaultSize={showTOC ? 37 : 50} minSize={28}>
+              {preview}
             </ResizablePanel>
+
+            {showTOC && (
+              <>
+                <ResizableHandle withHandle />
+
+                <ResizablePanel defaultSize={13}>{toc}</ResizablePanel>
+              </>
+            )}
           </ResizablePanelGroup>
-        ) : (
-          preview
-        )}
-      </Activity>
-
-      <Activity mode={viewMode === "split" ? "visible" : "hidden"}>
-        <ResizablePanelGroup orientation="horizontal">
-          {showSidebar && (
-            <>
-              <ResizablePanel defaultSize={15}>
-                <Sidebar />
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-            </>
-          )}
-
-          <ResizablePanel defaultSize={showSidebar ? 45 : 50} minSize={30}>
-            {editor}
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          <ResizablePanel defaultSize={showTOC ? 37 : 50} minSize={28}>
-            {preview}
-          </ResizablePanel>
-
-          {showTOC && (
-            <>
-              <ResizableHandle withHandle />
-
-              <ResizablePanel defaultSize={13}>{toc}</ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-      </Activity>
-    </div>
+        </Activity>
+      </m.div>
+    </LazyMotion>
   );
 
   return (

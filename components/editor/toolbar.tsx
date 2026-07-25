@@ -84,7 +84,7 @@ import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { useSettingsStore } from "@/store/settings-store";
 import { ImageForm } from "./forms/image-form";
 import { useStorageStore } from "@/store/storage-store";
-
+import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
   onToggleTheme: () => void;
@@ -268,128 +268,161 @@ export const Toolbar = memo(function Toolbar({
 
   return (
     <header className="border-b bg-background">
-      {showHeader && (
-        <>
-          <div className="flex min-h-15 items-center gap-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-                M
-              </div>
-              <div className="text-[2rem] font-semibold tracking-tight text-foreground">
-                Manus
-              </div>
-            </div>
-
-            <ToggleGroup
-              type="single"
-              value={topMode}
-              onValueChange={(value) => {
-                if (
-                  value === "write" ||
-                  value === "split" ||
-                  value === "preview"
-                  // value === "pdf"
-                ) {
-                  onViewModeChange(value);
-                }
+      <AnimatePresence initial={false}>
+        {showHeader && (
+          <LazyMotion features={domAnimation}>
+            <m.div
+              key="editor-header"
+              initial={{
+                opacity: 0,
+                y: -16,
+                height: 0
               }}
-              variant="outline"
-              size="lg"
-              className="p-1"
+              animate={{
+                opacity: 1,
+                y: 0,
+                height: "auto"
+              }}
+              exit={{
+                opacity: 0,
+                y: -16,
+                height: 0
+              }}
+              transition={{
+                duration: 0.2,
+                ease: "easeInOut"
+              }}
+              className="overflow-hidden"
             >
-              <ToggleGroupItem value="write" size="lg">
-                Write
-              </ToggleGroupItem>
+              <div className="flex min-h-15 items-center gap-3 px-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
+                    M
+                  </div>
+                  <div className="text-[2rem] font-semibold tracking-tight text-foreground">
+                    Manus
+                  </div>
+                </div>
 
-              {!isMobile && (
-                <ToggleGroupItem value="split" size="lg">
-                  Split
-                </ToggleGroupItem>
-              )}
+                <ToggleGroup
+                  type="single"
+                  value={topMode}
+                  onValueChange={(value) => {
+                    if (
+                      value === "write" ||
+                      value === "split" ||
+                      value === "preview"
+                      // value === "pdf"
+                    ) {
+                      onViewModeChange(value);
+                    }
+                  }}
+                  variant="outline"
+                  size="lg"
+                  className="p-1"
+                >
+                  <ToggleGroupItem value="write" size="lg">
+                    Write
+                  </ToggleGroupItem>
 
-              <ToggleGroupItem value="preview" size="lg">
-                Preview
-              </ToggleGroupItem>
-            </ToggleGroup>
+                  {!isMobile && (
+                    <ToggleGroupItem value="split" size="lg">
+                      Split
+                    </ToggleGroupItem>
+                  )}
 
-            <div className="ml-auto hidden items-center gap-1 lg:flex">
-              <Button variant="ghost" size="lg">
-                <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
-                Help
-              </Button>
-              <Button variant="ghost" size="lg" onClick={onToggleTheme}>
-                <HugeiconsIcon
-                  icon={Sun01Icon}
-                  size={16}
-                  data-icon="inline-start"
-                />
-                Theme
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => setSettingsOpen(true)}
-              >
-                <HugeiconsIcon
-                  icon={Settings05Icon}
-                  size={16}
-                  data-icon="inline-start"
-                />
-                Settings
-              </Button>
-              <Button variant="outline" size="lg" onClick={toggleFullScreen}>
-                <HugeiconsIcon
-                  icon={FullScreenIcon}
-                  size={16}
-                  data-icon="inline-start"
-                />
-                Fullscreen
-              </Button>
-            </div>
+                  <ToggleGroupItem value="preview" size="lg">
+                    Preview
+                  </ToggleGroupItem>
+                </ToggleGroup>
 
-            {/* Mobile/Tablet Menu */}
-            <div className="ml-auto flex items-center gap-1 lg:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <div className="ml-auto hidden items-center gap-1 lg:flex">
+                  <Button variant="ghost" size="lg">
+                    <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
+                    Help
+                  </Button>
+                  <Button variant="ghost" size="lg" onClick={onToggleTheme}>
+                    <HugeiconsIcon
+                      icon={Sun01Icon}
+                      size={16}
+                      data-icon="inline-start"
+                    />
+                    Theme
+                  </Button>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                  >
-                    <HugeiconsIcon icon={Settings05Icon} size={18} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={onToggleTheme} className="gap-2">
-                    <HugeiconsIcon icon={Sun01Icon} size={16} />
-                    <span>Toggle Theme</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="gap-2">
-                    <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
-                    <span>Help</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
+                    size="lg"
                     onClick={() => setSettingsOpen(true)}
-                    className="gap-2 cursor-pointer"
                   >
-                    <HugeiconsIcon icon={Settings05Icon} size={16} />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
+                    <HugeiconsIcon
+                      icon={Settings05Icon}
+                      size={16}
+                      data-icon="inline-start"
+                    />
+                    Settings
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
                     onClick={toggleFullScreen}
-                    className="gap-2"
                   >
-                    <HugeiconsIcon icon={FullScreenIcon} size={16} />
-                    <span>Fullscreen</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+                    <HugeiconsIcon
+                      icon={FullScreenIcon}
+                      size={16}
+                      data-icon="inline-start"
+                    />
+                    Fullscreen
+                  </Button>
+                </div>
 
-          <Separator />
-        </>
-      )}
+                {/* Mobile/Tablet Menu */}
+                <div className="ml-auto flex items-center gap-1 lg:hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl"
+                      >
+                        <HugeiconsIcon icon={Settings05Icon} size={18} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={onToggleTheme}
+                        className="gap-2"
+                      >
+                        <HugeiconsIcon icon={Sun01Icon} size={16} />
+                        <span>Toggle Theme</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="gap-2">
+                        <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
+                        <span>Help</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setSettingsOpen(true)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <HugeiconsIcon icon={Settings05Icon} size={16} />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={toggleFullScreen}
+                        className="gap-2"
+                      >
+                        <HugeiconsIcon icon={FullScreenIcon} size={16} />
+                        <span>Fullscreen</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+
+              <Separator />
+            </m.div>
+          </LazyMotion>
+        )}
+      </AnimatePresence>
 
       <div className="flex min-h-14 items-center justify-between overflow-x-auto px-4">
         <div className="flex min-w-max items-center rounded-md border border-border/80 bg-background px-2 py-1 shadow-sm">

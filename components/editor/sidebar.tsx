@@ -8,7 +8,7 @@ import { Plus } from "@hugeicons/core-free-icons";
 import { FileItem } from "./file-item";
 import { useFileStore } from "@/store/file-store";
 import { memo } from "react";
-
+import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
 export const Sidebar = memo(function Sidebar() {
   const files = useFileStore((s) => s.files);
   const activeFileId = useFileStore((s) => s.activeFileId);
@@ -31,18 +31,22 @@ export const Sidebar = memo(function Sidebar() {
       </div>
 
       <ScrollArea className="flex-1 p-2">
-        <div className="space-y-2">
-          {files.map((file) => (
-            <FileItem
-              key={file.id}
-              file={file}
-              active={file.id === activeFileId}
-              onSelect={setActiveFile}
-              onDelete={deleteFile}
-              onRename={renameFile}
-            />
-          ))}
-        </div>
+        <LazyMotion features={domAnimation}>
+          <m.div layout className="space-y-2">
+            <AnimatePresence initial={false}>
+              {files.map((file) => (
+                <FileItem
+                  key={file.id}
+                  file={file}
+                  active={file.id === activeFileId}
+                  onSelect={setActiveFile}
+                  onDelete={deleteFile}
+                  onRename={renameFile}
+                />
+              ))}
+            </AnimatePresence>
+          </m.div>
+        </LazyMotion>
       </ScrollArea>
     </aside>
   );
