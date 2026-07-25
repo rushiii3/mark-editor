@@ -47,14 +47,15 @@ Font.registerEmojiSource({
   url: "/emoji/"
 });
 
-function resolveEmoji(node: AstNode, emojifyFn: (s: string) => string) {
-  if (typeof node.value === "string") {
-    node.value = emojifyFn(node.value);
+function hashString(str: string): string {
+  let hash = 0x811c9dc5; // FNV-1a offset basis
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = globalThis.Math.imul(hash, 0x01000193); // FNV prime
   }
-  if (node.children) {
-    node.children.forEach((child) => resolveEmoji(child, emojifyFn));
-  }
+  return (hash >>> 0).toString(36);
 }
+const mermaidPngCache = new Map<string, string>();
 
 function extractFrontmatterCaption(diagramSource: string): {
   caption: string | null;
@@ -103,35 +104,6 @@ function extractCaptionFromMeta(
   return match[1] ?? match[2] ?? null;
 }
 
-async function renderMermaidDiagrams(node: AstNode) {
-  if (node.type === "code" && node.lang === "mermaid" && node.value) {
-    try {
-      const frontmatterResult = extractFrontmatterCaption(node.value);
-      const cleanValue = frontmatterResult.remainingSource;
-
-      const metaCaption = extractCaptionFromMeta(node.meta);
-      const caption = metaCaption ?? frontmatterResult.caption ?? "";
-
-      const { mermaidToPng } = await import("@/lib/mermaid");
-      const png = await mermaidToPng(cleanValue);
-
-      node.type = "image";
-      node.url = png;
-      node.alt = caption || undefined;
-
-      delete node.value;
-      delete node.lang;
-      delete node.meta;
-    } catch (err) {
-      console.error("Mermaid render failed", err);
-    }
-  }
-
-  if (node.children) {
-    await Promise.all(node.children.map(renderMermaidDiagrams));
-  }
-}
-
 interface AstNode {
   type: string;
   value?: string;
@@ -152,8 +124,15 @@ interface AstNode {
   children?: AstNode[];
 }
 
-const getStyles = (fontFamily: string) =>
-  StyleSheet.create({
+const stylesCache = new Map<string, ReturnType<typeof StyleSheet.create>>();
+
+const getStyles = (fontFamily: string) => {
+  const cached = stylesCache.get(fontFamily);
+  if (cached) {
+    return cached;
+  }
+
+  const styles = StyleSheet.create({
     page: {
       paddingTop: "20mm",
       paddingBottom: "22mm",
@@ -193,7 +172,6 @@ const getStyles = (fontFamily: string) =>
     paragraph: {
       fontFamily,
       paddingBottom: 8
-      // marginBottom: 8
     },
     listItem: {
       fontFamily,
@@ -227,9 +205,7 @@ const getStyles = (fontFamily: string) =>
     },
     codeBlock: {
       fontFamily: "Courier",
-      // backgroundColor: "#0F172A",
       backgroundColor: "#F3F4F6",
-      // color: "#F8FAFC",
       color: "#1F2937",
       paddingTop: 6,
       paddingHorizontal: 6,
@@ -255,14 +231,12 @@ const getStyles = (fontFamily: string) =>
       borderStyle: "solid",
       marginBottom: 10
     },
-
     tableRow: {
       fontFamily,
       flexDirection: "row",
       borderBottomWidth: 1,
       borderBottomColor: "#E5E7EB"
     },
-
     tableCell: {
       fontFamily,
       flex: 1,
@@ -271,7 +245,6 @@ const getStyles = (fontFamily: string) =>
       borderRightWidth: 1,
       borderRightColor: "#E5E7EB"
     },
-
     tableHeaderCell: {
       fontFamily,
       fontWeight: "bold",
@@ -311,6 +284,10 @@ const getStyles = (fontFamily: string) =>
       color: "#9CA3AF"
     }
   });
+
+  stylesCache.set(fontFamily, styles);
+  return styles;
+};
 
 async function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -362,50 +339,6 @@ function isWebpUrl(url: string): boolean {
   }
   const pathPart = url.split("?")[0].split("#")[0];
   return pathPart.toLowerCase().endsWith(".webp");
-}
-
-async function convertWebpImagesToPng(node: AstNode) {
-  if (node.type === "image" && node.url && isWebpUrl(node.url)) {
-    try {
-      const pngUrl = await webpToPng(node.url);
-      node.url = pngUrl;
-    } catch (error) {
-      console.error(
-        "Failed to convert webp image to png for PDF:",
-        node.url,
-        error
-      );
-    }
-  }
-
-  if (node.children) {
-    await Promise.all(node.children.map(convertWebpImagesToPng));
-  }
-}
-
-async function resolveAstLocalImages(node: AstNode) {
-  if (
-    node.type === "image" &&
-    node.url &&
-    node.url.startsWith("local-image:")
-  ) {
-    const id = node.url.replace("local-image:", "");
-
-    try {
-      const blob = await getImageBlob(id);
-
-      if (blob) {
-        node.url = await blobToDataUrl(blob);
-        console.log("Resolved image:", node.url.substring(0, 50));
-      }
-    } catch (error) {
-      console.error("Failed to resolve local image for PDF:", id, error);
-    }
-  }
-
-  if (node.children) {
-    await Promise.all(node.children.map(resolveAstLocalImages));
-  }
 }
 
 function renderChildren(children: AstNode[] | undefined, styles: any) {
@@ -876,6 +809,82 @@ function MarkdownPdfDocument({
   );
 }
 
+async function processAstNode(node: AstNode, emojifyFn: (s: string) => string) {
+  // 1. Resolve local-image: URLs from IndexedDB (must run before webp check,
+  //    since the resolved blob may itself be webp)
+  if (
+    node.type === "image" &&
+    node.url &&
+    node.url.startsWith("local-image:")
+  ) {
+    const id = node.url.replace("local-image:", "");
+    try {
+      const blob = await getImageBlob(id);
+      if (blob) {
+        node.url = await blobToDataUrl(blob);
+        console.log("Resolved image:", node.url.substring(0, 50));
+      }
+    } catch (error) {
+      console.error("Failed to resolve local image for PDF:", id, error);
+    }
+  }
+
+  // 2. Convert webp -> png (runs on the now-resolved url, local or remote)
+  if (node.type === "image" && node.url && isWebpUrl(node.url)) {
+    try {
+      node.url = await webpToPng(node.url);
+    } catch (error) {
+      console.error(
+        "Failed to convert webp image to png for PDF:",
+        node.url,
+        error
+      );
+    }
+  }
+
+  // 3. Render mermaid code blocks to PNG images
+  if (node.type === "code" && node.lang === "mermaid" && node.value) {
+    try {
+      const frontmatterResult = extractFrontmatterCaption(node.value);
+      const cleanValue = frontmatterResult.remainingSource;
+
+      const metaCaption = extractCaptionFromMeta(node.meta);
+      const caption = metaCaption ?? frontmatterResult.caption ?? "";
+
+      const cacheKey = hashString(cleanValue);
+      let png = mermaidPngCache.get(cacheKey);
+
+      if (!png) {
+        const { mermaidToPng } = await import("@/lib/mermaid");
+        png = await mermaidToPng(cleanValue);
+        mermaidPngCache.set(cacheKey, png);
+      }
+
+      node.type = "image";
+      node.url = png;
+      node.alt = caption || undefined;
+
+      delete node.value;
+      delete node.lang;
+      delete node.meta;
+    } catch (err) {
+      console.error("Mermaid render failed", err);
+    }
+  }
+
+  // 4. Emojify any remaining string value (skips mermaid nodes, since their
+  //    value was just deleted above — matches original pass ordering)
+  if (typeof node.value === "string") {
+    node.value = emojifyFn(node.value);
+  }
+
+  if (node.children) {
+    await Promise.all(
+      node.children.map((child) => processAstNode(child, emojifyFn))
+    );
+  }
+}
+
 export async function generateMarkdownPdfBlob(
   markdown: string,
   activeFont: string = "Inter"
@@ -900,17 +909,8 @@ export async function generateMarkdownPdfBlob(
     .use(remarkDirective)
     .use(remarkMath);
   const ast = processor.parse(markdown) as unknown as AstNode;
-  console.log(ast);
 
-  // Resolve local image Blobs asynchronously from IndexedDB before rendering
-  await resolveAstLocalImages(ast);
-
-  // Convert WebP images to PNG format for react-pdf compatibility
-  await convertWebpImagesToPng(ast);
-
-  await renderMermaidDiagrams(ast);
-
-  resolveEmoji(ast, emojify);
+  await processAstNode(ast, emojify);
 
   // await TextAlignment(ast);
 
