@@ -28,6 +28,7 @@ import { deleteFont, getAllFonts, type StoredFont } from "@/db/font";
 import { deleteImage, getAllImages, type StoredImage } from "@/db/image";
 import { cn } from "@/lib/utils";
 import { useStorageStore } from "@/store/storage-store";
+import { useImageCleanupWorker } from "@/hooks/use-image-cleaner";
 import type { MarkdownFile } from "@/store/file-store";
 
 const MEGABYTE = 1024 * 1024;
@@ -43,6 +44,13 @@ type StorageCategory = {
 };
 
 type StorageCategoryName = "Documents" | "Images" | "Fonts" | "Other";
+
+type UnusedImage = {
+  id: string;
+  name: string;
+  size: number;
+  createdAt: number;
+};
 
 type StorageItem = {
   id: string;
@@ -150,6 +158,14 @@ export function StorageDashboard() {
   const loading = useStorageStore((state) => state.loading);
   const refresh = useStorageStore((state) => state.refresh);
 
+  // Image cleanup worker state
+  const { worker, scan } = useImageCleanupWorker();
+  const [unusedImages, setUnusedImages] = useState<UnusedImage[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
+  const [scanProgress, setScanProgress] = useState({ processed: 0, total: 0 });
+  const [isDeletingAllUnused, setIsDeletingAllUnused] = useState(false);
+
   useEffect(() => {
     refresh();
   }, [refresh]);
@@ -182,6 +198,59 @@ export function StorageDashboard() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!worker.current) return;
+
+    const handleMessage = (e: MessageEvent) => {
+      switch (e.data.type) {
+        case "progress":
+          setScanProgress({
+            processed: e.data.processed,
+            total: e.data.total
+          });
+          break;
+
+        case "complete":
+          setUnusedImages(e.data.unused);
+          setIsScanning(false);
+          break;
+
+        case "error":
+          console.error(e.data.error);
+          setIsScanning(false);
+          break;
+      }
+    };
+
+    worker.current.addEventListener("message", handleMessage);
+
+    return () => {
+      worker.current?.removeEventListener("message", handleMessage);
+    };
+  }, [worker]);
+
+  const handleScan = () => {
+    setIsScanning(true);
+    setHasScanned(true);
+    setUnusedImages([]);
+    setScanProgress({ processed: 0, total: 0 });
+    scan();
+  };
+
+  async function handleDeleteAllUnused() {
+    if (unusedImages.length === 0) return;
+    setIsDeletingAllUnused(true);
+    try {
+      await Promise.all(unusedImages.map((img) => deleteImage(img.id)));
+      setUnusedImages([]);
+      await Promise.all([loadStorageItems(), refresh()]);
+    } catch (err) {
+      console.error("Failed to delete unused images:", err);
+    } finally {
+      setIsDeletingAllUnused(false);
+    }
+  }
 
   const documentItems = documents.map(toDocumentItem);
   const imageItems = images.map(toImageItem);
@@ -259,6 +328,7 @@ export function StorageDashboard() {
 
       if (selectedCategory.name === "Images") {
         await deleteImage(itemId);
+        setUnusedImages((prev) => prev.filter((img) => img.id !== itemId));
       }
 
       if (selectedCategory.name === "Fonts") {
@@ -457,39 +527,108 @@ export function StorageDashboard() {
           </CardHeader>
 
           <CardContent className="flex flex-col gap-3">
+            {selectedCategory.name === "Images" && (
+              <div className="flex flex-col gap-4 rounded-lg border bg-muted/40 p-4 mb-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold">Unused Image Cleanup</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Scan and remove images that are not referenced in any documents to free up storage space.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    {isScanning ? (
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <span className="animate-spin size-4 border-2 border-primary border-t-transparent rounded-full" />
+                        <span>Scanning ({scanProgress.processed}/{scanProgress.total})</span>
+                      </div>
+                    ) : (
+                      <>
+                        {hasScanned && (
+                          <Badge variant={unusedImages.length > 0 ? "destructive" : "secondary"}>
+                            {unusedImages.length} unused image{unusedImages.length !== 1 ? "s" : ""} found
+                          </Badge>
+                        )}
+                        <Button
+                          onClick={handleScan}
+                          size="sm"
+                          variant="outline"
+                          disabled={isScanning || isLoadingItems}
+                        >
+                          {hasScanned ? "Scan Again" : "Scan for Unused"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {hasScanned && unusedImages.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+                    <div className="text-xs text-muted-foreground">
+                      Unused images occupy{" "}
+                      <strong className="text-foreground font-semibold">
+                        {formatStorage(unusedImages.reduce((sum, img) => sum + img.size, 0))}
+                      </strong>{" "}
+                      of storage.
+                    </div>
+                    <Button
+                      onClick={handleDeleteAllUnused}
+                      size="sm"
+                      variant="destructive"
+                      disabled={deletingItemId !== null || isDeletingAllUnused}
+                    >
+                      {isDeletingAllUnused ? "Deleting..." : "Delete All Unused"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {isLoadingItems ? (
               <div className="rounded-lg border bg-muted/30 p-6 text-sm text-muted-foreground">
                 Loading stored {selectedCategory.name.toLowerCase()}...
               </div>
             ) : selectedItems.length > 0 ? (
-              selectedItems.map((item) => (
-                <div
-                  className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
-                  key={item.id}
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate text-sm font-semibold">
-                        {item.name}
-                      </h2>
-                      <Badge variant="secondary">
-                        {formatStorage(item.sizeBytes)}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      {item.detail}
-                    </p>
-                  </div>
-                  <Button
-                    disabled={deletingItemId === item.id}
-                    onClick={() => handleDeleteItem(item.id)}
-                    size="sm"
-                    variant="destructive"
+              selectedItems.map((item) => {
+                const isUnusedImage = selectedCategory.name === "Images" &&
+                  unusedImages.some((img) => img.id === item.id);
+                return (
+                  <div
+                    className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                    key={item.id}
                   >
-                    {deletingItemId === item.id ? "Deleting..." : "Delete"}
-                  </Button>
-                </div>
-              ))
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate text-sm font-semibold">
+                          {item.name}
+                        </h2>
+                        <Badge variant="secondary">
+                          {formatStorage(item.sizeBytes)}
+                        </Badge>
+                        {isUnusedImage && (
+                          <Badge
+                            variant="destructive"
+                            className="bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/10"
+                          >
+                            Unused
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {item.detail}
+                      </p>
+                    </div>
+                    <Button
+                      disabled={deletingItemId === item.id}
+                      onClick={() => handleDeleteItem(item.id)}
+                      size="sm"
+                      variant="destructive"
+                    >
+                      {deletingItemId === item.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                );
+              })
             ) : (
               <div className="rounded-lg border bg-muted/30 p-6 text-sm text-muted-foreground">
                 {canDeleteSelectedItems
