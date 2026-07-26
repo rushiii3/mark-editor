@@ -85,6 +85,7 @@ import { useSettingsStore } from "@/store/settings-store";
 import { ImageForm } from "./forms/image-form";
 import { useStorageStore } from "@/store/storage-store";
 import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
+import { toast } from "sonner";
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
   onToggleTheme: () => void;
@@ -244,13 +245,12 @@ export const Toolbar = memo(function Toolbar({
 
     try {
       const { url, alt } = await uploadLocalImage(file);
-
       onInsertImage(url, alt);
       refresh();
     } catch (error) {
-      console.error("Error uploading image:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error uploading image. ${message}`);
     } finally {
-      // Allows selecting the same file again
       event.target.value = "";
     }
   };

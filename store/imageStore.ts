@@ -45,11 +45,14 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   },
 
   async addImage(blob, name) {
-    const id = await saveImageBlob(blob, name);
-
-    await get().loadImages();
-
-    return id;
+    try {
+      const id = await saveImageBlob(blob, name);
+      await get().loadImages();
+      return id;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   },
 
   async removeImage(id) {

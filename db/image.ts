@@ -1,4 +1,6 @@
+import { toast } from "sonner";
 import { getDB } from "./database";
+import { mapStorageError } from "./errors/mapStorageError";
 
 export type StoredImage = {
   id: string;
@@ -22,10 +24,13 @@ export async function saveImageBlob(blob: Blob, name: string): Promise<string> {
   };
 
   const db = await getDB();
+  try {
+    await db.put("images", image);
 
-  await db.put("images", image);
-
-  return id;
+    return id;
+  } catch (error) {
+    throw mapStorageError(error);
+  }
 }
 
 export async function getImage(id: string): Promise<StoredImage | undefined> {
