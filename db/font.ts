@@ -1,4 +1,5 @@
 import { getDB } from "./database";
+import { mapStorageError } from "./errors/mapStorageError";
 
 export type StoredFont = {
   id: string;
@@ -16,7 +17,9 @@ export async function saveFont(
   blob: Blob
 ): Promise<string> {
   const cleanFamily = family.trim();
-  const id = `${cleanFamily}-${weight}-${style}`.toLowerCase().replace(/\s+/g, "-");
+  const id = `${cleanFamily}-${weight}-${style}`
+    .toLowerCase()
+    .replace(/\s+/g, "-");
 
   const font: StoredFont = {
     id,
@@ -27,9 +30,13 @@ export async function saveFont(
     createdAt: Date.now()
   };
 
-  const db = await getDB();
-  await db.put("fonts", font);
-  return id;
+  try {
+    const db = await getDB();
+    await db.put("fonts", font);
+    return id;
+  } catch (error) {
+    throw mapStorageError(error);
+  }
 }
 
 export async function getFont(id: string): Promise<StoredFont | undefined> {
