@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useSettingsStore } from "@/store/settings-store";
 import { saveFont, getAllFonts, deleteFont, type StoredFont } from "@/db/font";
 import { Trash2, Upload, Type, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -103,6 +104,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
       await refreshFonts();
     } catch (err) {
+      toast.error(
+        `Failed to upload font. ${err instanceof Error ? err.message : ""}`
+      );
       console.error("Failed to upload font:", err);
     } finally {
       setIsUploading(false);
