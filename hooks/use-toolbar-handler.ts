@@ -24,9 +24,13 @@ import {
   applyCallout,
   applyLineBreak
 } from "@/components/editor/editor-utils";
+import jszip from "jszip";
 
 import { useSettingsStore } from "@/store/settings-store";
 import { getImageBlob } from "@/db/image";
+import { useFileStore } from "@/store/file-store";
+import JSZip from "jszip";
+import { runStep, useLoaderStore } from "@/store/loaderStore";
 
 type UseToolbarHandlerProps = {
   editorRef: RefObject<EditorView | null>;
@@ -40,6 +44,7 @@ export function useToolbarHandler({
   onTocToggle
 }: UseToolbarHandlerProps) {
   const activeFont = useSettingsStore((s) => s.activeFont);
+  const { start, setStep, fail, finish } = useLoaderStore.getState();
   const handleInsertImage = useCallback(
     (url: string, alt: string) => {
       const editorInstance = editorRef.current;
@@ -99,37 +104,32 @@ export function useToolbarHandler({
     [editorRef]
   );
 
-  function blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  async function embedLocalImages(markdown: string) {
+  async function exportImages(zip: JSZip, markdown: string): Promise<string> {
     const regex = /!\[([^\]]*)\]\(local-image:([^)]+)\)/g;
 
-    let result = markdown;
+    let updatedMarkdown = markdown;
 
-    const matches = [...markdown.matchAll(regex)];
-
-    for (const match of matches) {
+    for (const match of markdown.matchAll(regex)) {
       const [fullMatch, alt, imageId] = match;
 
       const blob = await getImageBlob(imageId);
       if (!blob) continue;
 
-      const base64 = await blobToBase64(blob);
+      // Preserve extension if possible
+      const extension =
+        blob.type.split("/")[1] || imageId.split(".").pop() || "webp";
 
-      result = result.replace(fullMatch, `![${alt}](${base64})`);
+      zip.file(`images/${imageId}.${extension}`, blob);
+
+      updatedMarkdown = updatedMarkdown.replace(
+        fullMatch,
+        `![${alt}](images/${imageId}.${extension})`
+      );
     }
 
-    return result;
+    return updatedMarkdown;
   }
+
   const handleToolbarAction = useCallback(
     async (action: ToolbarAction) => {
       const editorInstance = editorRef.current;
@@ -138,57 +138,121 @@ export function useToolbarHandler({
       }
 
       if (action === "export-pdf") {
-        const markdown = editorInstance.state.doc.toString();
+        start([
+          { text: "Reading document" },
+          { text: "Rendering PDF" },
+          { text: "Preparing download" }
+        ]);
+
         try {
-          const { generateMarkdownPdfBlob } =
-            await import("@/lib/editor/pdf-generator");
-          const blob = await generateMarkdownPdfBlob(markdown, activeFont);
-          const url = URL.createObjectURL(blob);
-          console.log(url);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = "document.pdf";
-          link.click();
-          URL.revokeObjectURL(url);
+          const markdown = await runStep(0, () =>
+            editorInstance.state.doc.toString()
+          );
+
+          const blob = await runStep(1, async () => {
+            const { generateMarkdownPdfBlob } =
+              await import("@/lib/editor/pdf-generator");
+            return generateMarkdownPdfBlob(markdown, activeFont);
+          });
+
+          await runStep(2, () => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "document.pdf";
+            link.click();
+            URL.revokeObjectURL(url);
+          });
+
+          finish();
         } catch (error) {
           console.error("Failed to generate PDF:", error);
+          fail(
+            error instanceof Error ? error.message : "Failed to generate PDF"
+          );
         }
         return;
       }
-      if (action === "export-html") {
-      }
+
       if (action === "export-md") {
+        start([
+          { text: "Collecting file" },
+          { text: "Extracting images" },
+          { text: "Building package" },
+          { text: "Compressing" },
+          { text: "Preparing download" }
+        ]);
+
         try {
-          const markdown = editorInstance.state.doc.toString();
+          const activeFile = await runStep(0, () =>
+            useFileStore
+              .getState()
+              .files.find((f) => f.id === useFileStore.getState().activeFileId)
+          );
 
-          const exportMarkdown = await embedLocalImages(markdown);
-
-          if (!exportMarkdown) {
-            return null;
+          if (!activeFile) {
+            fail("No active file to export");
+            return;
           }
 
-          console.log(exportMarkdown);
+          const zip = new jszip();
 
-          const blob = new Blob([exportMarkdown], {
-            type: "text/markdown;charset=utf-8"
+          const markdown = await runStep(1, () =>
+            exportImages(zip, activeFile.content)
+          );
+
+          await runStep(2, () => {
+            const metadata = {
+              format: "mdpack",
+              version: 1,
+              project: {
+                id: activeFile.id,
+                name: activeFile.name,
+                createdAt: activeFile.createdAt,
+                updatedAt: activeFile.updatedAt
+              },
+              editor: { name: "Markdown Editor", version: "1.0.0" }
+            };
+            const settings = {
+              theme: "dark",
+              page: { size: "A4", margin: 32 }
+            };
+
+            zip.file("metadata.json", JSON.stringify(metadata, null, 2));
+            zip.file("settings.json", JSON.stringify(settings, null, 2));
+            zip.file(
+              `${activeFile.name.replace(/\.md$/i, "") || "Untitled"}.md`,
+              markdown
+            );
           });
 
-          const url = URL.createObjectURL(blob);
+          const blob = await runStep(3, () =>
+            zip.generateAsync({
+              type: "blob",
+              compression: "DEFLATE",
+              compressionOptions: { level: 9 }
+            })
+          );
 
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = "document.md";
+          await runStep(4, () => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${activeFile.name.replace(/\.md$/i, "") || "Untitled"}.mdpack`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+          });
 
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-
-          URL.revokeObjectURL(url);
+          finish();
         } catch (error) {
-          console.error("Failed to generate PDF:", error);
+          console.error("Failed to export project:", error);
+          fail(
+            error instanceof Error ? error.message : "Failed to export project"
+          );
         }
       }
-
       switch (action) {
         case "undo":
           applyUndo(editorInstance);
