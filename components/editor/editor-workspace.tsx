@@ -24,6 +24,7 @@ import { useCodeMirrorHandler } from "@/hooks/use-codemirror-handler";
 import EditorFooter from "./editor-footer";
 import { useStorageStore } from "@/store/storage-store";
 import { LazyMotion, domAnimation, m } from "framer-motion";
+import { MultiStepLoader } from "../ui/multi-step-loader";
 
 const EditorPanel = dynamic(
   () =>
@@ -439,6 +440,7 @@ export function EditorWorkspace() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background text-foreground">
+      <MultiStepLoader />
       {fontStylesHtml && (
         <style dangerouslySetInnerHTML={{ __html: fontStylesHtml }} />
       )}

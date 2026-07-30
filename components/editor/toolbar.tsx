@@ -4,6 +4,7 @@ import { type ReactNode, memo, useState } from "react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { SettingsDialog } from "./settings-dialog";
 import {
+  FileUploadIcon,
   ArrowTurnBackwardIcon,
   ArrowTurnForwardIcon,
   CheckListIcon,
@@ -424,8 +425,19 @@ export const Toolbar = memo(function Toolbar({
         )}
       </AnimatePresence>
 
-      <div className="flex min-h-14 items-center justify-between overflow-x-auto px-4">
-        <div className="flex min-w-max items-center rounded-md border border-border/80 bg-background px-2 py-1 shadow-sm">
+      <div className="flex min-h-14 items-center overflow-x-auto px-4">
+        <ToolTipWrapper label="Import Markdown File">
+          <Button
+            type="button"
+            size="lg"
+            variant={"outline"}
+            // onClick={() => onAction("import-markdown")}
+          >
+            <HugeiconsIcon icon={FileUploadIcon} size={16} />
+            Import
+          </Button>
+        </ToolTipWrapper>
+        <div className="flex min-w-max items-center rounded-md border border-border/80 bg-background px-2 py-1 ml-2 shadow-sm">
           <IconButton
             action={{
               action: "file",
@@ -565,7 +577,7 @@ export const Toolbar = memo(function Toolbar({
           </ToolbarDropdown>
         </div>
 
-        <div className="flex min-w-max items-center gap-2 px-2 py-1">
+        <div className="flex min-w-max items-center gap-2 px-2 py-1 ml-auto">
           <ToolTipWrapper label={showHeader ? "Hide Header" : "Reveal Header"}>
             <Button
               type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, File01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
@@ -26,14 +26,26 @@ export const FileItem = memo(function FileItem({
   const [editing, setEditing] = useState(false);
 
   function getBaseName(name: string) {
-    const index = name.lastIndexOf(".");
-    return index === -1 ? name : name.slice(0, index);
+    const trimmed = name.trim();
+
+    if (!trimmed) {
+      return "Untitled";
+    }
+
+    const index = trimmed.lastIndexOf(".");
+    return index === -1 ? trimmed : trimmed.slice(0, index);
   }
 
   function getExtension(name: string) {
     const index = name.lastIndexOf(".");
     return index === -1 ? "" : name.slice(index);
   }
+
+  const [name, setName] = useState(getBaseName(file.name));
+
+  useEffect(() => {
+    setName(getBaseName(file.name));
+  }, [file.name]);
 
   return (
     <LazyMotion features={domAnimation}>
@@ -71,18 +83,29 @@ export const FileItem = memo(function FileItem({
           {editing ? (
             <input
               autoFocus
-              value={getBaseName(file.name)}
+              value={name}
               className="w-full border-none bg-transparent text-sm outline-none"
               onFocus={(e) => e.target.select()}
-              onBlur={() => setEditing(false)}
+              onBlur={() => {
+                const finalName = name.trim() || "Untitled";
+
+                onRename(file.id, finalName + getExtension(file.name));
+                setEditing(false);
+              }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === "Escape") {
+                if (e.key === "Enter") {
+                  const finalName = name.trim() || "Untitled";
+
+                  onRename(file.id, finalName + getExtension(file.name));
+                  setEditing(false);
+                }
+
+                if (e.key === "Escape") {
+                  setName(getBaseName(file.name));
                   setEditing(false);
                 }
               }}
-              onChange={(e) =>
-                onRename(file.id, e.target.value + getExtension(file.name))
-              }
+              onChange={(e) => setName(e.target.value)}
             />
           ) : (
             <span className="block truncate text-sm">{file.name}</span>
