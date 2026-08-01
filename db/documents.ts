@@ -44,3 +44,25 @@ export async function getDocument(id: string) {
 
   return db.get("documents", id);
 }
+
+export async function updateDocument(
+  id: string,
+  updates: Partial<AppDB["documents"]["value"]>
+): Promise<void> {
+  try {
+    const db = await getDB();
+
+    const existing = await db.get("documents", id);
+
+    if (!existing) {
+      throw new Error(`Document with id "${id}" not found.`);
+    }
+
+    await db.put("documents", {
+      ...existing,
+      ...updates
+    });
+  } catch (error) {
+    throw mapStorageError(error);
+  }
+}

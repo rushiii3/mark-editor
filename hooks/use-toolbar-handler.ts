@@ -27,7 +27,7 @@ import {
 import jszip from "jszip";
 
 import { useSettingsStore } from "@/store/settings-store";
-import { getImageBlob } from "@/db/image";
+import { getImage, getImageBlob } from "@/db/image";
 import { useFileStore } from "@/store/file-store";
 import JSZip from "jszip";
 import { runStep, useLoaderStore } from "@/store/loaderStore";
@@ -104,30 +104,65 @@ export function useToolbarHandler({
     [editorRef]
   );
 
-  async function exportImages(zip: JSZip, markdown: string): Promise<string> {
+  interface ImageManifest {
+    id: string;
+    file: string;
+    originalName: string;
+    mimeType: string;
+    size: number;
+    createdAt: number;
+  }
+
+  async function exportImages(
+    zip: JSZip,
+    markdown: string
+  ): Promise<{
+    markdown: string;
+    manifest: {
+      images: ImageManifest[];
+    };
+  }> {
     const regex = /!\[([^\]]*)\]\(local-image:([^)]+)\)/g;
 
     let updatedMarkdown = markdown;
 
+    const manifest: ImageManifest[] = [];
+
     for (const match of markdown.matchAll(regex)) {
       const [fullMatch, alt, imageId] = match;
 
-      const blob = await getImageBlob(imageId);
-      if (!blob) continue;
+      const image = await getImage(imageId);
 
-      // Preserve extension if possible
+      if (!image) continue;
+
       const extension =
-        blob.type.split("/")[1] || imageId.split(".").pop() || "webp";
+        image.type.split("/")[1] || imageId.split(".").pop() || "webp";
 
-      zip.file(`images/${imageId}.${extension}`, blob);
+      const file = `images/${imageId}.${extension}`;
+
+      zip.file(file, image.blob);
+
+      manifest.push({
+        id: imageId,
+        file,
+        originalName: image.name,
+        mimeType: image.type,
+        size: image.size,
+        createdAt: image.createdAt
+      });
 
       updatedMarkdown = updatedMarkdown.replace(
         fullMatch,
-        `![${alt}](images/${imageId}.${extension})`
+        `![${alt}](${file})`
       );
     }
 
-    return updatedMarkdown;
+    return {
+      markdown: updatedMarkdown,
+      manifest: {
+        images: manifest
+      }
+    };
   }
 
   const handleToolbarAction = useCallback(
@@ -197,7 +232,7 @@ export function useToolbarHandler({
 
           const zip = new jszip();
 
-          const markdown = await runStep(1, () =>
+          const { markdown, manifest } = await runStep(1, () =>
             exportImages(zip, activeFile.content)
           );
 
@@ -219,7 +254,10 @@ export function useToolbarHandler({
             };
 
             zip.file("metadata.json", JSON.stringify(metadata, null, 2));
+
             zip.file("settings.json", JSON.stringify(settings, null, 2));
+
+            zip.file("manifest.json", JSON.stringify(manifest, null, 2));
             zip.file(
               `${activeFile.name.replace(/\.md$/i, "") || "Untitled"}.md`,
               markdown
