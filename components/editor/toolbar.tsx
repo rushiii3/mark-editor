@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, memo, useState } from "react";
+import { type ReactNode, memo, useRef, useState } from "react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { SettingsDialog } from "./settings-dialog";
 import {
@@ -87,6 +87,11 @@ import { ImageForm } from "./forms/image-form";
 import { useStorageStore } from "@/store/storage-store";
 import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
 import { toast } from "sonner";
+import { importProject } from "@/lib/import";
+import { Toaster } from "../ui/sonner";
+import { runStep, useLoaderStore } from "@/store/loaderStore";
+import { IMPORT_MD_STEPS, IMPORT_MDPACK_STEPS } from "@/steps";
+import { useFileStore } from "@/store/file-store";
 type ToolbarProps = {
   onAction: (action: ToolbarAction) => void;
   onToggleTheme: () => void;
@@ -227,6 +232,9 @@ export const Toolbar = memo(function Toolbar({
 }: ToolbarProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const refresh = useStorageStore((s) => s.refresh);
+  const loadFiles = useFileStore((state) => state.loadFiles);
+  const { start, fail, finish } = useLoaderStore.getState();
+
   const topMode =
     viewMode === "write"
       ? "write"
@@ -266,6 +274,43 @@ export const Toolbar = memo(function Toolbar({
   const { showHeader, toggleHeader } = useSettingsStore();
 
   console.log("Toolbar rendered ");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  function getImportSteps(filename: string) {
+    return filename.toLowerCase().endsWith(".mdpack")
+      ? IMPORT_MDPACK_STEPS
+      : IMPORT_MD_STEPS;
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const steps = [...getImportSteps(file.name)];
+
+      start(steps);
+
+      await importProject(file, {
+        runStep
+      });
+      loadFiles();
+      refresh();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      fail(errorMessage);
+      toast.error(errorMessage);
+      console.error(error);
+    } finally {
+      finish();
+      e.target.value = "";
+    }
+  };
 
   return (
     <header className="border-b bg-background">
@@ -426,16 +471,28 @@ export const Toolbar = memo(function Toolbar({
       </AnimatePresence>
 
       <div className="flex min-h-14 items-center overflow-x-auto px-4">
-        <ToolTipWrapper label="Import Markdown File">
-          <Button
-            type="button"
-            size="lg"
-            variant={"outline"}
-            // onClick={() => onAction("import-markdown")}
-          >
-            <HugeiconsIcon icon={FileUploadIcon} size={16} />
-            Import
-          </Button>
+        <ToolTipWrapper label="Import Project">
+          <label>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              asChild
+              onClick={handleImportClick}
+            >
+              <span>
+                <HugeiconsIcon icon={FileUploadIcon} size={16} />
+                Import
+              </span>
+            </Button>
+
+            <input
+              type="file"
+              accept=".mdpack,.md,text/markdown"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </label>
         </ToolTipWrapper>
         <div className="flex min-w-max items-center rounded-md border border-border/80 bg-background px-2 py-1 ml-2 shadow-sm">
           <IconButton
