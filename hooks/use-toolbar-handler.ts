@@ -187,7 +187,14 @@ export function useToolbarHandler({
           const blob = await runStep(1, async () => {
             const { generateMarkdownPdfBlob } =
               await import("@/lib/editor/pdf-generator");
-            return generateMarkdownPdfBlob(markdown, activeFont);
+            const { getSetting } = await import("@/db/setting");
+            
+            const activeFileId = useFileStore.getState().activeFileId;
+            const layoutConfig = activeFileId
+              ? (await getSetting<Record<string, unknown>>(`document-layout:${activeFileId}`)) || undefined
+              : undefined;
+
+            return generateMarkdownPdfBlob(markdown, activeFont, layoutConfig);
           });
 
           await runStep(2, () => {
