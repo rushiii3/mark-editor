@@ -1,6 +1,8 @@
 "use client";
 
 import { type ReactNode, memo, useRef, useState } from "react";
+import Link from "next/link";
+import { Sliders } from "lucide-react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { SettingsDialog } from "./settings-dialog";
 import {
@@ -398,6 +400,16 @@ export const Toolbar = memo(function Toolbar({
                   <Button
                     variant="ghost"
                     size="lg"
+                    asChild
+                  >
+                    <Link href="/editor/header-footer" className="flex items-center gap-1">
+                      <Sliders className="size-3.5" />
+                      Header & Footer
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="lg"
                     onClick={() => setSettingsOpen(true)}
                   >
                     <HugeiconsIcon
@@ -444,6 +456,15 @@ export const Toolbar = memo(function Toolbar({
                       <DropdownMenuItem className="gap-2">
                         <HugeiconsIcon icon={HelpCircleFreeIcons} size={16} />
                         <span>Help</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        asChild
+                        className="gap-2 cursor-pointer"
+                      >
+                        <Link href="/editor/header-footer" className="flex w-full items-center gap-2">
+                          <Sliders className="size-4" />
+                          <span>Header & Footer</span>
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setSettingsOpen(true)}

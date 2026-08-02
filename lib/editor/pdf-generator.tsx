@@ -757,26 +757,174 @@ function renderBlockNode(
 interface MarkdownPdfDocumentProps {
   ast: AstNode;
   activeFont?: string;
+  layoutConfig?: any;
+  metadata?: any;
+}
+
+const resolvePdfText = (text: string, metadata: Record<string, string>) => {
+  let resolved = text || "";
+  resolved = resolved.replace(/\{\{title\}\}/gi, metadata.title || "");
+  resolved = resolved.replace(/\{\{file_name\}\}/gi, metadata.file_name || "");
+  resolved = resolved.replace(/\{\{author\}\}/gi, metadata.author || "");
+  resolved = resolved.replace(/\{\{company\}\}/gi, metadata.company || "");
+  resolved = resolved.replace(/\{\{version\}\}/gi, metadata.version || "");
+  resolved = resolved.replace(/\{\{date\}\}/gi, metadata.date || "");
+  resolved = resolved.replace(/\{\{time\}\}/gi, metadata.time || "");
+  return resolved;
+};
+
+const PdfRegion = ({ region, metadata, align }: { region: any; metadata: Record<string, string>; align: string }) => {
+  if (!region) return null;
+  const text = region.text || "";
+  const hasPage = /\{\{page\}\}/i.test(text);
+  const hasPages = /\{\{pages\}\}/i.test(text);
+
+  const baseStyle: any = {
+    fontFamily: region.fontFamily || "Inter",
+    fontSize: parseFloat(region.fontSize || "9") || 9,
+    fontWeight: region.bold ? "bold" : "normal",
+    fontStyle: region.italic ? "italic" : "normal",
+    textDecoration: region.underline ? "underline" : "none",
+    color: region.color || "#64748b"
+  };
+
+  const containerStyle: any = {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: align === "right" ? "flex-end" : align === "center" ? "center" : "flex-start",
+    flex: 1
+  };
+
+  const renderContent = (pageNumber?: number, totalPages?: number) => {
+    let resolved = text;
+    if (pageNumber !== undefined) {
+      resolved = resolved.replace(/\{\{page\}\}/gi, pageNumber.toString());
+    }
+    if (totalPages !== undefined) {
+      resolved = resolved.replace(/\{\{pages\}\}/gi, totalPages.toString());
+    }
+    return resolvePdfText(resolved, metadata);
+  };
+
+  return (
+    <View style={containerStyle}>
+      {region.image && (
+        <Image src={region.image} style={{ height: 11, marginRight: 5 }} />
+      )}
+      {hasPage || hasPages ? (
+        <Text
+          style={baseStyle}
+          render={({ pageNumber, totalPages }) => renderContent(pageNumber, totalPages)}
+        />
+      ) : (
+        <Text style={baseStyle}>
+          {renderContent()}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+function parseCssForPdf(css: string): { header: any; footer: any } {
+  const result = {
+    header: {},
+    footer: {}
+  };
+  if (!css) return result;
+
+  const cleanCss = css.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  const headerMatch = cleanCss.match(/\.header\s*\{([^}]+)\}/i);
+  const footerMatch = cleanCss.match(/\.footer\s*\{([^}]+)\}/i);
+
+  const parseRules = (ruleStr: string) => {
+    const styles: any = {};
+    const rules = ruleStr.split(";");
+    for (const rule of rules) {
+      const parts = rule.split(":");
+      if (parts.length < 2) continue;
+      const key = parts[0].trim().toLowerCase();
+      const val = parts[1].trim();
+
+      if (key === "border-bottom" || key === "border-top") {
+        const borderMatch = val.match(/([\d.]+)(px|pt|mm)?\s+(\w+)\s+(#\w+|rgb\([^)]+\)|\w+)/i);
+        const prefix = key === "border-bottom" ? "borderBottom" : "borderTop";
+        if (borderMatch) {
+          styles[`${prefix}Width`] = parseFloat(borderMatch[1]) || 1;
+          styles[`${prefix}Color`] = borderMatch[4];
+          styles[`${prefix}Style`] = borderMatch[3] === "dashed" ? "dashed" : "solid";
+        } else {
+          const sizeVal = parseFloat(val);
+          if (!isNaN(sizeVal)) {
+            styles[`${prefix}Width`] = sizeVal;
+            styles[`${prefix}Color`] = "#e2e8f0";
+            styles[`${prefix}Style`] = "solid";
+          }
+        }
+      } else if (key === "padding-bottom" || key === "padding-top") {
+        const prop = key === "padding-bottom" ? "paddingBottom" : "paddingTop";
+        const valNum = parseFloat(val);
+        if (!isNaN(valNum)) styles[prop] = valNum;
+      } else if (key === "margin-bottom" || key === "margin-top") {
+        const prop = key === "margin-bottom" ? "marginBottom" : "marginTop";
+        const valNum = parseFloat(val);
+        if (!isNaN(valNum)) styles[prop] = valNum;
+      } else if (key === "color") {
+        styles.color = val;
+      }
+    }
+    return styles;
+  };
+
+  if (headerMatch) result.header = parseRules(headerMatch[1]);
+  if (footerMatch) result.footer = parseRules(footerMatch[1]);
+
+  return result;
 }
 
 function MarkdownPdfDocument({
   ast,
-  activeFont = "Inter"
+  activeFont = "Inter",
+  layoutConfig,
+  metadata = {}
 }: MarkdownPdfDocumentProps) {
   const styles = getStyles(activeFont);
 
+  // Compile CSS rules for pdf renderer
+  const cssStyles = parseCssForPdf(layoutConfig?.advancedCss);
+
+  const headerStyle = {
+    position: "absolute" as const,
+    top: 20,
+    left: 46,
+    right: 46,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    ...cssStyles.header
+  };
+
+  const footerStyle = {
+    position: "absolute" as const,
+    bottom: 20,
+    left: 46,
+    right: 46,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    ...cssStyles.footer
+  };
+
   return (
     <Document
-      title="This is a sample"
-      author="Manus MD Editor"
-      subject="This is a sample subject"
+      title={metadata.title || "Untitled Document"}
+      author={metadata.author || "Manus MD Editor"}
       permissions={{
         contentAccessibility: true,
         printing: "highResolution",
         modifying: false
       }}
       producer="Manus MarkDown Editor"
-      // pageMode=""
       pdfVersion="1.7"
       language="English"
     >
@@ -785,25 +933,30 @@ function MarkdownPdfDocument({
         size="A4"
         style={[styles.page, { fontFamily: activeFont }]}
         orientation="portrait"
-        fixed={true}
       >
-        <View>
-          {/* {ast.children?.map((child: AstNode, index: number) =>
-            renderBlockNode(child, index)
-          )} */}
-          {ast.children?.map((child, index) => {
-            // console.log(index, child.type, child.children?.length);
+        {/* Scoped Running Header */}
+        {layoutConfig?.header && (
+          <View fixed style={headerStyle}>
+            <PdfRegion region={layoutConfig.header.left} metadata={metadata} align="left" />
+            <PdfRegion region={layoutConfig.header.center} metadata={metadata} align="center" />
+            <PdfRegion region={layoutConfig.header.right} metadata={metadata} align="right" />
+          </View>
+        )}
 
+        <View>
+          {ast.children?.map((child, index) => {
             return renderBlockNode(child, index, styles);
           })}
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text>The equation </Text>
-          <Math inline height={10}>
-            {"E = mc^2"}
-          </Math>
-          <Text> is famous.</Text>
-        </View>
+
+        {/* Scoped Running Footer */}
+        {layoutConfig?.footer && (
+          <View fixed style={footerStyle}>
+            <PdfRegion region={layoutConfig.footer.left} metadata={metadata} align="left" />
+            <PdfRegion region={layoutConfig.footer.center} metadata={metadata} align="center" />
+            <PdfRegion region={layoutConfig.footer.right} metadata={metadata} align="right" />
+          </View>
+        )}
       </Page>
     </Document>
   );
@@ -885,9 +1038,27 @@ async function processAstNode(node: AstNode, emojifyFn: (s: string) => string) {
   }
 }
 
+const extractDocumentMetadata = (markdownText: string) => {
+  const metadata: Record<string, string> = {};
+  const frontmatterMatch = markdownText.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (frontmatterMatch) {
+    const lines = frontmatterMatch[1].split("\n");
+    for (const line of lines) {
+      const parts = line.split(":");
+      if (parts.length >= 2) {
+        const key = parts[0].trim().toLowerCase();
+        const value = parts.slice(1).join(":").trim().replace(/^["']|["']$/g, "");
+        metadata[key] = value;
+      }
+    }
+  }
+  return metadata;
+};
+
 export async function generateMarkdownPdfBlob(
   markdown: string,
-  activeFont: string = "Inter"
+  activeFont: string = "Inter",
+  layoutConfig?: any
 ): Promise<Blob> {
   const [
     { remark },
@@ -985,9 +1156,32 @@ export async function generateMarkdownPdfBlob(
     }
   }
 
+  const metadata = extractDocumentMetadata(markdown);
+  // Establish default values for running header/footer replacements
+  if (!metadata.title) metadata.title = "Manus Markdown Studio";
+  if (!metadata.author) metadata.author = "Sarah Connor";
+  if (!metadata.date) {
+    metadata.date = new Date().toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+  if (!metadata.time) {
+    metadata.time = new Date().toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
   const { pdf } = await import("@react-pdf/renderer");
   const resolvedPdf = await pdf(
-    <MarkdownPdfDocument ast={ast} activeFont={activeFont} />
+    <MarkdownPdfDocument
+      ast={ast}
+      activeFont={activeFont}
+      layoutConfig={layoutConfig}
+      metadata={metadata}
+    />
   ).toBlob();
   // console.log(resolvedPdf);
   return resolvedPdf;
