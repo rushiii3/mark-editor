@@ -1,9 +1,9 @@
 import React from "react";
-import { Layout, Info, Sparkles, Check } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { VARIABLES, TEMPLATES } from "../constants";
+import { Layout, Type, ShieldCheck, FileCode } from "lucide-react";
 
 interface LeftSidebarProps {
+  activeCategory: "layout" | "typography" | "metadata" | "css";
+  setActiveCategory: (category: "layout" | "typography" | "metadata" | "css") => void;
   selectedSection: "header" | "footer";
   setSelectedSection: (section: "header" | "footer") => void;
   setSelectedRegion: (region: "left" | "center" | "right") => void;
@@ -14,136 +14,91 @@ interface LeftSidebarProps {
 }
 
 export function LeftSidebar({
+  activeCategory,
+  setActiveCategory,
   selectedSection,
   setSelectedSection,
-  setSelectedRegion,
-  activeTemplate,
-  handleTemplateSelect,
-  insertVariable,
-  handleDragStart
+  setSelectedRegion
 }: LeftSidebarProps) {
+  const categories = [
+    {
+      id: "layout" as const,
+      label: "Page Layout & Margin",
+      description: "Header/footer regions, size, orientation, and margins",
+      icon: Layout,
+      color: "text-blue-500 bg-blue-500/10 border-blue-500/20"
+    },
+    {
+      id: "typography" as const,
+      label: "Typography",
+      description: "Body font sizes, alignment, spacing, and editor themes",
+      icon: Type,
+      color: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20"
+    },
+    {
+      id: "metadata" as const,
+      label: "Metadata & Security",
+      description: "Presets, cover pages, watermarks, and variables",
+      icon: ShieldCheck,
+      color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+    },
+    {
+      id: "css" as const,
+      label: "Advanced CSS",
+      description: "Custom scoped styles compiled into layout stylesheets",
+      icon: FileCode,
+      color: "text-violet-500 bg-violet-500/10 border-violet-500/20"
+    }
+  ];
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-5 select-none custom-scrollbar">
-      {/* Section 1: Selector Tabs */}
-      <div className="space-y-2">
-        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Target Component
+    <div className="flex-1 overflow-y-auto p-5 space-y-6 select-none custom-scrollbar bg-background/5">
+      <div className="space-y-1">
+        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">
+          Settings Console
         </label>
-        <div className="grid grid-cols-2 gap-1 bg-muted/40 p-0.5 rounded-lg border border-border/30">
-          <button
-            onClick={() => {
-              setSelectedSection("header");
-              setSelectedRegion("left");
-            }}
-            className={`flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-md transition-all font-medium cursor-pointer ${
-              selectedSection === "header"
-                ? "bg-card text-foreground shadow-xs border border-border/50"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layout className="size-3.5 rotate-180" />
-            Header
-          </button>
-          <button
-            onClick={() => {
-              setSelectedSection("footer");
-              setSelectedRegion("left");
-            }}
-            className={`flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-md transition-all font-medium cursor-pointer ${
-              selectedSection === "footer"
-                ? "bg-card text-foreground shadow-xs border border-border/50"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layout className="size-3.5" />
-            Footer
-          </button>
-        </div>
-      </div>
-
-      {/* Section 2: Variable Chips */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Drag-and-Drop Variables
-          </label>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="size-3.5 text-muted-foreground/60 cursor-pointer" />
-            </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-xs bg-slate-900 text-white p-2 text-xs rounded">
-              Drag a chip into the textarea, or click one to insert it at your cursor.
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        <p className="text-[10px] text-muted-foreground/80 leading-normal">
-          Incorporate dynamic fields into document headers and footers:
+        <p className="text-[10px] text-muted-foreground/80 leading-normal font-medium">
+          Select a category to inspect or modify the PDF compiler specifications:
         </p>
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          {VARIABLES.map((v) => (
-            <div
-              key={v.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, v.token)}
-              onClick={() => insertVariable(v.token)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border border-border bg-background hover:border-primary hover:text-primary transition-all shadow-2xs hover:shadow-sm cursor-grab active:cursor-grabbing select-none group"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary transition-colors" />
-              {v.label}
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* Section 3: Templates gallery */}
-      <div className="space-y-2.5">
-        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Preset Templates
-        </label>
-        <div className="grid grid-cols-1 gap-2">
-          {Object.keys(TEMPLATES).map((tId) => {
-            const isActive = activeTemplate === tId;
-            return (
-              <button
-                key={tId}
-                onClick={() => handleTemplateSelect(tId)}
-                className={`group relative flex flex-col p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  isActive
-                    ? "border-primary bg-primary/5 shadow-sm text-foreground"
-                    : "border-border hover:bg-muted/40 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-xs font-semibold capitalize tracking-tight flex items-center gap-1.5">
-                    <Sparkles
-                      className={`size-3.5 ${
-                        isActive
-                          ? "text-primary fill-primary/10"
-                          : "text-muted-foreground group-hover:text-foreground"
-                      }`}
-                    />
-                    {tId}
-                  </span>
-                  {isActive && (
-                    <span className="flex items-center justify-center size-4 rounded-full bg-primary text-primary-foreground text-[8px]">
-                      <Check className="size-2.5 stroke-[3]" />
-                    </span>
-                  )}
-                </div>
-                <p className="text-[10px] text-muted-foreground/75 mt-1 font-normal leading-normal">
-                  {tId === "minimal" && "Clean layout with subtle dividers and running titles."}
-                  {tId === "academic" && "Traditional style with serif center titles and double borders."}
-                  {tId === "corporate" && "Structured headers with upper bold corporate fields."}
-                  {tId === "book" && "Mirror style margin layout mimicking physical book spreads."}
-                  {tId === "report" && "Standard design containing report meta, date and dividers."}
-                  {tId === "resume" && "Bold header block emphasizing name and CV status."}
-                  {tId === "legal" && "Structured headers and NDA clauses wrapped in borders."}
+      <nav className="space-y-2.5">
+        {categories.map((cat) => {
+          const isActive = activeCategory === cat.id;
+          const Icon = cat.icon;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => {
+                setActiveCategory(cat.id);
+                // Reset selections to safe defaults if swapping categories to avoid layout composer issues
+                if (cat.id === "layout") {
+                  setSelectedSection("header");
+                  setSelectedRegion("left");
+                }
+              }}
+              className={`group flex items-start gap-3.5 p-3.5 w-full rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? "border-blue-650 bg-blue-500/5 dark:bg-blue-500/5 shadow-2xs text-foreground"
+                  : "border-border/60 hover:border-border hover:bg-muted/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className={`p-2 rounded-xl border ${cat.color} shrink-0 shadow-3xs group-hover:scale-105 transition-transform`}>
+                <Icon className="size-4.5" />
+              </div>
+              <div className="space-y-0.5 mt-0.5">
+                <span className="text-[11px] font-bold tracking-tight block">
+                  {cat.label}
+                </span>
+                <p className="text-[10px] text-muted-foreground/80 font-medium leading-relaxed">
+                  {cat.description}
                 </p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+              </div>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 }
+

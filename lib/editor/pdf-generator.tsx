@@ -126,44 +126,59 @@ interface AstNode {
 
 const stylesCache = new Map<string, ReturnType<typeof StyleSheet.create>>();
 
-const getStyles = (fontFamily: string) => {
-  const cached = stylesCache.get(fontFamily);
+const getDynamicStyles = (fontFamily: string, layoutConfig?: any) => {
+  const cacheKey = fontFamily + "_" + JSON.stringify(layoutConfig || {});
+  const cached = stylesCache.get(cacheKey);
   if (cached) {
     return cached;
   }
 
+  const baseFontSize = layoutConfig?.bodyFontSize || 12;
+  const baseLineHeight = layoutConfig?.bodyLineHeight || 1.55;
+  const paragraphSpacing = layoutConfig?.paragraphSpacing !== undefined ? layoutConfig.paragraphSpacing : 8;
+  const alignment = layoutConfig?.bodyAlignment || "left";
+  const margins = layoutConfig?.margins || { top: 20, bottom: 22, left: 18, right: 18 };
+  const accent = layoutConfig?.accentColor || "#000000";
+
+  const isDarkCode = layoutConfig?.codeBlockTheme === "dark";
+  const codeBg = isDarkCode ? "#1e1e1e" : "#F3F4F6";
+  const codeColor = isDarkCode ? "#d4d4d4" : "#1F2937";
+  const inlineBg = isDarkCode ? "#2d2d2d" : "#f3f4f6";
+  const inlineColor = isDarkCode ? "#e06c75" : "#d63384";
+
   const styles = StyleSheet.create({
     page: {
-      paddingTop: "20mm",
-      paddingBottom: "22mm",
-      paddingLeft: "18mm",
-      paddingRight: "18mm",
+      paddingTop: `${margins.top}mm`,
+      paddingBottom: `${margins.bottom}mm`,
+      paddingLeft: `${margins.left}mm`,
+      paddingRight: `${margins.right}mm`,
       fontFamily,
-      fontSize: 12,
-      lineHeight: 1.55,
-      color: "#000000"
+      fontSize: baseFontSize,
+      lineHeight: baseLineHeight,
+      color: "#000000",
+      textAlign: alignment as any
     },
     h1: {
       fontFamily,
-      fontSize: 22,
+      fontSize: globalThis.Math.round(baseFontSize * 1.83), // 22 when base is 12
       fontWeight: "bold",
       marginBottom: 10,
       marginTop: 18,
-      color: "#000000",
+      color: accent,
       lineHeight: 1.4
     },
     h2: {
       fontFamily,
-      fontSize: 16,
+      fontSize: globalThis.Math.round(baseFontSize * 1.33), // 16 when base is 12
       fontWeight: "bold",
       marginBottom: 8,
       marginTop: 14,
-      color: "#000000",
+      color: accent,
       paddingBottom: 4
     },
     h3: {
       fontFamily,
-      fontSize: 12,
+      fontSize: baseFontSize,
       fontWeight: "bold",
       marginBottom: 6,
       marginTop: 10,
@@ -171,7 +186,7 @@ const getStyles = (fontFamily: string) => {
     },
     paragraph: {
       fontFamily,
-      paddingBottom: 8
+      paddingBottom: paragraphSpacing
     },
     listItem: {
       fontFamily,
@@ -181,7 +196,7 @@ const getStyles = (fontFamily: string) => {
     listBullet: {
       fontFamily,
       width: 14,
-      color: "#9CA3AF"
+      color: accent
     },
     listContent: {
       fontFamily,
@@ -197,26 +212,26 @@ const getStyles = (fontFamily: string) => {
     },
     inlineCode: {
       fontFamily: "Courier",
-      fontSize: 9,
-      color: "#d63384",
-      backgroundColor: "#f3f4f6",
+      fontSize: baseFontSize * 0.75,
+      color: inlineColor,
+      backgroundColor: inlineBg,
       letterSpacing: 0.2,
       lineHeight: 1.2
     },
     codeBlock: {
       fontFamily: "Courier",
-      backgroundColor: "#F3F4F6",
-      color: "#1F2937",
+      backgroundColor: codeBg,
+      color: codeColor,
       paddingTop: 6,
       paddingHorizontal: 6,
       borderRadius: 6,
       marginBottom: 8,
-      fontSize: 9
+      fontSize: baseFontSize * 0.75
     },
     blockquote: {
       fontFamily,
-      borderLeftWidth: 2,
-      borderLeftColor: "#D1D5DB",
+      borderLeftWidth: 2.5,
+      borderLeftColor: accent,
       paddingLeft: 10,
       marginBottom: 8,
       color: "#4B5563",
@@ -241,7 +256,7 @@ const getStyles = (fontFamily: string) => {
       fontFamily,
       flex: 1,
       padding: 6,
-      fontSize: 9,
+      fontSize: baseFontSize * 0.75,
       borderRightWidth: 1,
       borderRightColor: "#E5E7EB"
     },
@@ -262,12 +277,12 @@ const getStyles = (fontFamily: string) => {
     calloutHeader: {
       fontFamily,
       fontWeight: "bold",
-      fontSize: 9,
+      fontSize: baseFontSize * 0.75,
       marginBottom: 4
     },
     calloutContent: {
       fontFamily,
-      fontSize: 9.5
+      fontSize: baseFontSize * 0.79
     },
     footer: {
       fontFamily,
@@ -282,10 +297,34 @@ const getStyles = (fontFamily: string) => {
       justifyContent: "space-between",
       fontSize: 8,
       color: "#9CA3AF"
+    },
+    watermark: {
+      position: "absolute",
+      top: "35%",
+      left: "-25%",
+      width: "150%",
+      textAlign: "center",
+      fontSize: 60,
+      fontWeight: "bold",
+      color: "#a1a1a1",
+      transform: "rotate(-30deg)",
+      zIndex: -1
+    },
+    watermarkCover: {
+      position: "absolute",
+      top: "35%",
+      left: "-25%",
+      width: "150%",
+      textAlign: "center",
+      fontSize: 60,
+      fontWeight: "bold",
+      color: "#a1a1a1",
+      transform: "rotate(-30deg)",
+      zIndex: -1
     }
   });
 
-  stylesCache.set(fontFamily, styles);
+  stylesCache.set(cacheKey, styles);
   return styles;
 };
 
@@ -435,14 +474,16 @@ function renderInlineNode(
 function renderBlockNode(
   node: AstNode,
   index: number,
-  styles: any
+  styles: any,
+  headingPageBreak?: boolean
 ): React.ReactNode {
   switch (node.type) {
     case "heading": {
       const headingStyle =
         node.depth === 1 ? styles.h1 : node.depth === 2 ? styles.h2 : styles.h3;
+      const shouldBreak = node.break || (node.depth === 1 && headingPageBreak);
       return (
-        <Text key={index} style={[headingStyle, node.style]} break={node.break}>
+        <Text key={index} style={[headingStyle, node.style]} break={shouldBreak}>
           {renderChildren(node.children, styles)}
         </Text>
       );
@@ -455,7 +496,7 @@ function renderBlockNode(
           <View key={index} style={styles.paragraph}>
             {node.children?.map((child, i) => {
               if (child.type === "image") {
-                return renderBlockNode(child, i, styles);
+                return renderBlockNode(child, i, styles, headingPageBreak);
               }
 
               return (
@@ -773,7 +814,17 @@ const resolvePdfText = (text: string, metadata: Record<string, string>) => {
   return resolved;
 };
 
-const PdfRegion = ({ region, metadata, align }: { region: any; metadata: Record<string, string>; align: string }) => {
+const PdfRegion = ({
+  region,
+  metadata,
+  align,
+  layoutConfig
+}: {
+  region: any;
+  metadata: Record<string, string>;
+  align: string;
+  layoutConfig?: any;
+}) => {
   if (!region) return null;
   const text = region.text || "";
   const hasPage = /\{\{page\}\}/i.test(text);
@@ -795,10 +846,34 @@ const PdfRegion = ({ region, metadata, align }: { region: any; metadata: Record<
     flex: 1
   };
 
+  const formatPageNumber = (num: number, format?: string) => {
+    if (num <= 0) return "";
+    if (format === "roman") {
+      const romanMap: Record<number, string> = {
+        1: "I", 2: "II", 3: "III", 4: "IV", 5: "V",
+        6: "VI", 7: "VII", 8: "VIII", 9: "IX", 10: "X"
+      };
+      return romanMap[num] || num.toString();
+    }
+    if (format === "alphabetical") {
+      const alphaMap: Record<number, string> = {
+        1: "A", 2: "B", 3: "C", 4: "D", 5: "E",
+        6: "F", 7: "G", 8: "H", 9: "I", 10: "J"
+      };
+      return alphaMap[num] || num.toString();
+    }
+    return num.toString();
+  };
+
   const renderContent = (pageNumber?: number, totalPages?: number) => {
     let resolved = text;
     if (pageNumber !== undefined) {
-      resolved = resolved.replace(/\{\{page\}\}/gi, pageNumber.toString());
+      const startOffset = layoutConfig?.pageNumberStart !== undefined ? layoutConfig.pageNumberStart : 1;
+      const pageIndex = layoutConfig?.autoCoverPage
+        ? (pageNumber === 1 ? 0 : (pageNumber - 2) + startOffset)
+        : (pageNumber - 1) + startOffset;
+      const formattedNum = formatPageNumber(pageIndex, layoutConfig?.pageNumberFormat);
+      resolved = resolved.replace(/\{\{page\}\}/gi, formattedNum);
     }
     if (totalPages !== undefined) {
       resolved = resolved.replace(/\{\{pages\}\}/gi, totalPages.toString());
@@ -888,7 +963,8 @@ function MarkdownPdfDocument({
   layoutConfig,
   metadata = {}
 }: MarkdownPdfDocumentProps) {
-  const styles = getStyles(activeFont);
+  // Use dynamic configuration styling
+  const styles = getDynamicStyles(activeFont, layoutConfig);
 
   // Compile CSS rules for pdf renderer
   const cssStyles = parseCssForPdf(layoutConfig?.advancedCss);
@@ -901,6 +977,10 @@ function MarkdownPdfDocument({
     flexDirection: "row" as const,
     alignItems: "center" as const,
     justifyContent: "space-between" as const,
+    borderBottomWidth: layoutConfig?.headerDividerWidth || 0,
+    borderBottomColor: layoutConfig?.headerDividerColor || "#cbd5e1",
+    borderBottomStyle: "solid" as const,
+    paddingBottom: 4,
     ...cssStyles.header
   };
 
@@ -912,50 +992,169 @@ function MarkdownPdfDocument({
     flexDirection: "row" as const,
     alignItems: "center" as const,
     justifyContent: "space-between" as const,
+    borderTopWidth: layoutConfig?.footerDividerWidth || 0,
+    borderTopColor: layoutConfig?.footerDividerColor || "#cbd5e1",
+    borderTopStyle: "solid" as const,
+    paddingTop: 6,
     ...cssStyles.footer
+  };
+
+  // Compile PDF permissions parameters mapping
+  const pdfPermissions = {
+    contentAccessibility: layoutConfig?.allowCopying !== undefined ? layoutConfig.allowCopying : true,
+    printing: layoutConfig?.allowPrinting || "highResolution",
+    modifying: layoutConfig?.allowModifying !== undefined ? layoutConfig.allowModifying : true,
+    copying: layoutConfig?.allowCopying !== undefined ? layoutConfig.allowCopying : true,
+    annotating: layoutConfig?.allowModifying !== undefined ? layoutConfig.allowModifying : true
   };
 
   return (
     <Document
       title={metadata.title || "Untitled Document"}
       author={metadata.author || "Manus MD Editor"}
-      permissions={{
-        contentAccessibility: true,
-        printing: "highResolution",
-        modifying: false
-      }}
+      subject={layoutConfig?.subject || metadata.subject || ""}
+      creator={layoutConfig?.creator || metadata.creator || "Manus MD Editor"}
+      keywords={layoutConfig?.keywords || metadata.keywords || ""}
+      userPassword={layoutConfig?.userPassword || undefined}
+      ownerPassword={layoutConfig?.ownerPassword || undefined}
+      permissions={pdfPermissions}
       producer="Manus MarkDown Editor"
       pdfVersion="1.7"
       language="English"
     >
+      {/* Cover Page */}
+      {layoutConfig?.autoCoverPage && (
+        <Page
+          size={layoutConfig.pageSize || "A4"}
+          orientation={layoutConfig.orientation || "portrait"}
+          style={[styles.page, { justifyContent: "center", alignItems: "center", padding: 30 }]}
+        >
+          {layoutConfig.watermarkText && (
+            <Text
+              style={[
+                styles.watermarkCover,
+                { opacity: layoutConfig.watermarkOpacity !== undefined ? layoutConfig.watermarkOpacity : 0.08 }
+              ]}
+            >
+              {layoutConfig.watermarkText}
+            </Text>
+          )}
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", width: "100%" }}>
+            <Text style={{ fontSize: 32, fontWeight: "bold", marginBottom: 15, textAlign: "center" }}>
+              {metadata.title}
+            </Text>
+            <View style={{ width: 60, height: 3, backgroundColor: layoutConfig?.accentColor || "#3b82f6", marginBottom: 20 }} />
+            {metadata.description && (
+              <Text style={{ fontSize: 13, color: "#475569", marginBottom: 40, textAlign: "center", lineHeight: 1.5 }}>
+                {metadata.description}
+              </Text>
+            )}
+            <View style={{ marginTop: 20, alignItems: "center" }}>
+              {metadata.author && (
+                <Text style={{ fontSize: 11, color: "#1e293b", fontWeight: "bold", marginBottom: 4 }}>
+                  {metadata.author}
+                </Text>
+              )}
+              {metadata.company && (
+                <Text style={{ fontSize: 10, color: "#64748b", marginBottom: 4 }}>
+                  {metadata.company}
+                </Text>
+              )}
+              {metadata.version && (
+                <Text style={{ fontSize: 9, color: "#94a3b8", marginBottom: 15, fontFamily: "Courier" }}>
+                  Version {metadata.version}
+                </Text>
+              )}
+              {metadata.date && (
+                <Text style={{ fontSize: 9, color: "#64748b" }}>
+                  {metadata.date}
+                </Text>
+              )}
+            </View>
+          </View>
+        </Page>
+      )}
+
+      {/* Main Content Pages */}
       <Page
         wrap={true}
-        size="A4"
+        size={layoutConfig?.pageSize || "A4"}
+        orientation={layoutConfig?.orientation || "portrait"}
         style={[styles.page, { fontFamily: activeFont }]}
-        orientation="portrait"
       >
+        {/* Scoped Diagonal Watermark */}
+        {layoutConfig?.watermarkText && (
+          <Text
+            fixed
+            style={[
+              styles.watermark,
+              { opacity: layoutConfig.watermarkOpacity !== undefined ? layoutConfig.watermarkOpacity : 0.08 }
+            ]}
+          >
+            {layoutConfig.watermarkText}
+          </Text>
+        )}
+
         {/* Scoped Running Header */}
         {layoutConfig?.header && (
-          <View fixed style={headerStyle}>
-            <PdfRegion region={layoutConfig.header.left} metadata={metadata} align="left" />
-            <PdfRegion region={layoutConfig.header.center} metadata={metadata} align="center" />
-            <PdfRegion region={layoutConfig.header.right} metadata={metadata} align="right" />
-          </View>
+          <View
+            fixed
+            style={headerStyle}
+            render={({ pageNumber }) => {
+              const startPage = layoutConfig.autoCoverPage ? 2 : 1;
+              if (layoutConfig.excludeHeaderFooterFirstPage && pageNumber === startPage) {
+                return null;
+              }
+              const isEven = pageNumber % 2 === 0;
+              const mirror = !!layoutConfig.mirrorHeaderFooterOddEven;
+              const leftRegion = isEven && mirror ? layoutConfig.header.right : layoutConfig.header.left;
+              const rightRegion = isEven && mirror ? layoutConfig.header.left : layoutConfig.header.right;
+              const leftAlign = isEven && mirror ? "right" : "left";
+              const rightAlign = isEven && mirror ? "left" : "right";
+
+              return (
+                <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
+                  <PdfRegion region={leftRegion} metadata={metadata} align={leftAlign} layoutConfig={layoutConfig} />
+                  <PdfRegion region={layoutConfig.header.center} metadata={metadata} align="center" layoutConfig={layoutConfig} />
+                  <PdfRegion region={rightRegion} metadata={metadata} align={rightAlign} layoutConfig={layoutConfig} />
+                </View>
+              );
+            }}
+          />
         )}
 
         <View>
           {ast.children?.map((child, index) => {
-            return renderBlockNode(child, index, styles);
+            return renderBlockNode(child, index, styles, !!layoutConfig?.headingPageBreak);
           })}
         </View>
 
         {/* Scoped Running Footer */}
         {layoutConfig?.footer && (
-          <View fixed style={footerStyle}>
-            <PdfRegion region={layoutConfig.footer.left} metadata={metadata} align="left" />
-            <PdfRegion region={layoutConfig.footer.center} metadata={metadata} align="center" />
-            <PdfRegion region={layoutConfig.footer.right} metadata={metadata} align="right" />
-          </View>
+          <View
+            fixed
+            style={footerStyle}
+            render={({ pageNumber }) => {
+              const startPage = layoutConfig.autoCoverPage ? 2 : 1;
+              if (layoutConfig.excludeHeaderFooterFirstPage && pageNumber === startPage) {
+                return null;
+              }
+              const isEven = pageNumber % 2 === 0;
+              const mirror = !!layoutConfig.mirrorHeaderFooterOddEven;
+              const leftRegion = isEven && mirror ? layoutConfig.footer.right : layoutConfig.footer.left;
+              const rightRegion = isEven && mirror ? layoutConfig.footer.left : layoutConfig.footer.right;
+              const leftAlign = isEven && mirror ? "right" : "left";
+              const rightAlign = isEven && mirror ? "left" : "right";
+
+              return (
+                <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
+                  <PdfRegion region={leftRegion} metadata={metadata} align={leftAlign} layoutConfig={layoutConfig} />
+                  <PdfRegion region={layoutConfig.footer.center} metadata={metadata} align="center" layoutConfig={layoutConfig} />
+                  <PdfRegion region={rightRegion} metadata={metadata} align={rightAlign} layoutConfig={layoutConfig} />
+                </View>
+              );
+            }}
+          />
         )}
       </Page>
     </Document>

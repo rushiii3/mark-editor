@@ -19,6 +19,9 @@ import { PrintVisualizer } from "./components/print-visualizer";
 export default function HeaderFooterEditorPage() {
   const { resolvedTheme } = useTheme();
   const editor = useHeaderFooterEditor();
+  const [activeCategory, setActiveCategory] = React.useState<
+    "layout" | "typography" | "metadata" | "css"
+  >("layout");
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
@@ -44,11 +47,13 @@ export default function HeaderFooterEditorPage() {
         <ResizablePanelGroup orientation="horizontal">
           {/* Left Sidebar (23%) */}
           <ResizablePanel
-            defaultSize={40}
-            minSize={30}
+            defaultSize={23}
+            minSize={20}
             className="flex flex-col bg-card/40 border-r border-border/80"
           >
             <LeftSidebar
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
               selectedSection={editor.selectedSection}
               setSelectedSection={editor.setSelectedSection}
               setSelectedRegion={editor.setSelectedRegion}
@@ -68,6 +73,7 @@ export default function HeaderFooterEditorPage() {
             className="flex flex-col bg-background"
           >
             <LayoutComposer
+              activeCategory={activeCategory}
               selectedSection={editor.selectedSection}
               selectedRegion={editor.selectedRegion}
               setSelectedSection={editor.setSelectedSection}
@@ -85,13 +91,21 @@ export default function HeaderFooterEditorPage() {
               handleDragOver={editor.handleDragOver}
               saveConfig={editor.saveConfig}
               resolvedTheme={resolvedTheme}
+              activeTemplate={editor.activeTemplate}
+              handleTemplateSelect={editor.handleTemplateSelect}
+              insertVariable={editor.insertVariable}
+              handleDragStart={editor.handleDragStart}
             />
           </ResizablePanel>
 
           <ResizableHandle withHandle />
 
           {/* Right Panel (Real-Time A4 Simulation) (35%) */}
-          <ResizablePanel defaultSize={35} minSize={30} className="flex flex-col bg-muted/30 relative animate-in fade-in duration-150">
+          <ResizablePanel
+            defaultSize={35}
+            minSize={30}
+            className="flex flex-col bg-muted/30 relative animate-in fade-in duration-150"
+          >
             <PrintVisualizer
               config={editor.config}
               showMarginGuides={editor.showMarginGuides}
